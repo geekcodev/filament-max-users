@@ -1,0 +1,19 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - src
+        - tests
+        - config
+
+    level: max
+
+    parseModelCastsMethod: true
+
+    configDirectories:
+        - %currentWorkingDirectory%/config
+
+    tmpDir: %currentWorkingDirectory%/.phpstan-cache
