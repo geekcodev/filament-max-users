@@ -1,5 +1,5 @@
 ---
-tags: [workflow, agents, coverage, ci, docs, gate]
+tags: [ workflow, agents, coverage, ci, docs, gate ]
 date: 2026-10-01
 ---
 
@@ -14,29 +14,28 @@ date: 2026-10-01
 
 ## Решение
 
-- `AGENTS.md` переработан: «Статус и версии» с динамической сверкой (`composer show`, `git tag`) и объяснением, почему
-  `laravel-max-client ^1.2.0` обязателен; правило «регрессия в интеграционном приложении чинится здесь»; различение
-  «текст коммита» и «коммит» плюс текст коммита на английском по Conventional Commits по всему diff ветки; запрет
-  `git add .`; таблица «что куда писать»; соглашения с BC-совместимостью; разделы 10 «Частые ошибки» (14 ловушек) и
-  11 «Чек-лист»; Gate со шагом покрытия.
-- Гейт покрытия: `scripts/check-coverage.php` (порог 95% строк, `build/coverage.xml`), скрипт `composer coverage`, в CI
-  `coverage: xdebug` и шаг «Tests and coverage»; три теста на `ChatPresenter` для модели хоста.
-- `README.md` — блок локальной разработки (`composer coverage`, `-T`) и раздел «История изменений».
-- Рабочая память переведена из `.ai/progress/` в `.agents/`: `plans/`, `release/`, `journals/{JOURNAL.md, sessions/}`; план
-  и release notes перенесены из корня, ссылки обновлены. Добавлен `.gitattributes` с `export-ignore` для `.agents/**`,
-  `tests/**`, `.github/**` и dev-конфигов.
-- Аудит ветки: добавлены `canCreate()`/`canEdit()`/`canDelete()` → `false` с двумя feature-тестами (контракт был описан в
-  правилах, но не реализован); контракт `counts()` в §5 и gotcha 3 приведён к коду (`counts('chatUsers')`,
-  `counts('chatLinks')` — Filament v5 ждёт имя связи, а не имя колонки); исправлено выравнивание `scripts` в
-  `composer.json`; BC-строка уточнена — тексты подписей править можно, фиксируя в release notes.
-- Форматы рабочей памяти приведены к образцу соседнего пакета (сессии, `JOURNAL.md` как таблица, имена
-  `RELEASE_NOTES_vX.Y.Z.md`) и закреплены в §4.1 `AGENTS.md`.
-- Подготовлены release notes: релиз ломающий (`laravel-max-client ^1.2.0`, новая форма реестра, `max:upgrade`, новое право
-  `chats.manage`), поэтому версия minor — `RELEASE_NOTES_v1.1.0.md`.
+- `AGENTS.md` переработан: динамическая сверка версий (`composer show`, `git tag`), правило «регрессия в интеграционном
+  приложении чинится здесь», текст коммита на английском по Conventional Commits по всему diff ветки, запрет
+  `git add .`, таблица «что куда писать», соглашения с BC-совместимостью, разделы «Частые ошибки» и «Чек-лист», Gate с
+  покрытием; форматы рабочей памяти закреплены в §4.1.
+- Гейт покрытия: `scripts/check-coverage.php` (порог 95% строк), скрипт `composer coverage`, в CI `coverage: xdebug`;
+  три теста на `ChatPresenter` для модели хоста.
+- `phpstan.neon`: `reportUnmatchedIgnoredErrors: false` — без `composer.lock` CI получает более новые Filament/Livewire/
+  Larastan, хелперных ошибок там не возникает, и незакрытые записи baseline роняли `composer analyse`.
+- `README.md`: локальная разработка (`composer coverage`, `-T`) и «История изменений».
+- Рабочая память: `.ai/progress/` → `.agents/{plans,release,journals}`, release notes → `RELEASE_NOTES_vX.Y.Z.md`,
+  `.gitattributes` с `export-ignore` для `.agents/**`, `tests/**`, `.github/**` и dev-конфигов.
+- Аудит ветки: `canCreate()`/`canEdit()`/`canDelete()` → `false` с двумя feature-тестами; контракт `counts()` в §5 и
+  gotcha 3 приведён к коду (`counts('chatLinks')`, `counts('chatUsers')` — Filament v5 ждёт имя связи); выравнивание
+  `scripts` в `composer.json`; BC-строка про тексты подписей.
+- Release notes v1.1.0: релиз ломающий (`laravel-max-client ^1.2.0`, новая форма реестра, `max:upgrade`, право
+  `chats.manage`), поэтому версия minor.
 
-Ключевые решения: порог 95% строк взят как в соседнем пакете, но сначала закрыты тестами непокрытые ветки `ChatPresenter`
-(иначе гейт проходил бы впритык, 95.66%); `.agents/` оставлен в git, а не в `.gitignore` — иначе после `git clone` план
-и журнал недоступны; из дистрибутива каталог исключён через `export-ignore`.
+Ключевые решения: порог 95% строк взят как в соседнем пакете, но сначала закрыты тестами непокрытые ветки
+`ChatPresenter`
+(иначе гейт проходил бы впритык, 95.66%); `.agents/` оставлен в git — иначе после `git clone` план и журнал недоступны,
+из дистрибутива каталог исключён через `export-ignore`; дрейф зависимостей вместо правки baseline снят флагом
+`reportUnmatchedIgnoredErrors`, потому что baseline содержит только хелперы из `tests/`.
 
 ## Тесты
 
@@ -48,8 +47,11 @@ date: 2026-10-01
   Filament-плагине их нет. Взят только workflow и структура.
 - Ловушка `.gitattributes`: нужен паттерн `/.agents/**` — с завершающим слешем `git check-attr export-ignore` молча
   отдаёт `unspecified`.
+- Локальный Gate не воспроизводит CI: на своём lock хелперные ошибки есть и baseline совпадает. Проверка в условиях CI —
+  копия дерева без `composer.lock` и Gate в ней (gotcha 14, шаг 35 плана).
 - Изменены тексты подписей (не ключи), включая русский текст в `lang/en` — BC-строка это допускает.
 
 ## Gate
 
-lint 0 файлов · phpstan max 0 ошибок · phpunit 35/35 (123 утверждения) · покрытие 97.22% строк (порог 95%) · audit 0.
+Локально: lint 0 · phpstan max 0 · phpunit 35/35 (123) · покрытие 97.22% · audit 0. В условиях CI (Filament 5.9.0,
+Livewire 4.4.7, Larastan 3.12.2, PHPStan 2.2.16) — тот же результат по всем пяти шагам.
