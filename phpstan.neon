@@ -13,6 +13,12 @@ parameters:
 
     parseModelCastsMethod: true
 
+    # composer.lock у пакета не коммитится, поэтому набор версий Filament/Livewire/Larastan
+    # в CI и локально расходится: ошибки тестовых хелперов то появляются, то исчезают, и
+    # запись baseline закономерно оказывается незакрытой. Baseline содержит только хелперы
+    # из tests/ (gotcha 13), поэтому незакрытые записи ошибкой не считаем.
+    reportUnmatchedIgnoredErrors: false
+
     configDirectories:
         - %currentWorkingDirectory%/config
 

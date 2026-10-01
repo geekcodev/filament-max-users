@@ -97,6 +97,21 @@ class MaxUserResource extends Resource
         ];
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
     public static function canAccess(): bool
     {
         $permission = config()->string('filament-max-users.permissions.users.view', 'users.view');
