@@ -9,6 +9,7 @@ return [
         'users.view'   => env('FILAMENT_MAX_USERS_PERMISSION_USERS_VIEW', 'users.view'),
         'users.manage' => env('FILAMENT_MAX_USERS_PERMISSION_USERS_MANAGE', 'users.manage'),
         'chats.view'   => env('FILAMENT_MAX_USERS_PERMISSION_CHATS_VIEW', 'chats.view'),
+        'chats.manage' => env('FILAMENT_MAX_USERS_PERMISSION_CHATS_MANAGE', 'chats.manage'),
         'chats.delete' => env('FILAMENT_MAX_USERS_PERMISSION_CHATS_DELETE', 'chats.delete'),
     ],
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 return [
 
     'resource' => [
-        'label'          => 'Max пользователь',
-        'plural_label'   => 'Max пользователи',
+        'label'          => 'Max user',
+        'plural_label'   => 'Max users',
         'navigation_label' => 'Max users',
     ],
 
@@ -15,13 +15,18 @@ return [
         'first_name'        => 'First name',
         'last_name'         => 'Last name',
         'username'          => 'Username',
+        'phone'             => 'Phone',
+        'phone_hint'        => 'Phone received from a verified contact',
+        'email'             => 'Email',
         'is_bot'            => 'Bot',
         'last_activity_time' => 'Last activity',
         'chats_count'       => 'Chats',
         'avatar'            => 'Avatar',
+        'profile_checked_at' => 'Last synced',
         'filter_is_bot'     => 'Type',
         'filter_is_bot_user' => 'User',
         'filter_is_bot_bot'  => 'Bot',
+        'filter_has_phone'  => 'With phone',
     ],
 
     'view' => [
@@ -36,12 +41,19 @@ return [
         'last_activity_time' => 'Last activity',
         'name'               => 'Display name',
         'description'        => 'Description',
-        'avatar_url'         => 'Avatar URL',
-        'full_avatar_url'    => 'Full avatar URL',
+        'avatar_url'         => 'Avatar',
+        'full_avatar_url'    => 'Full avatar',
         'phone'              => 'Phone',
+        'phone_verified_at'  => 'Phone verified at',
+        'phone_unverified'   => 'no verified contact',
         'email'              => 'Email',
         'profile_checked_at' => 'Last synced',
-        'chats_count'        => 'Chats count',
+        'never_checked'      => 'never synced',
+        'chats'              => 'Chats',
+        'chat_name'          => 'Name',
+        'chat_id'            => 'Chat ID',
+        'chat_type'          => 'Chat type',
+        'chat_last_activity_at' => 'Last activity',
     ],
 
     'actions' => [

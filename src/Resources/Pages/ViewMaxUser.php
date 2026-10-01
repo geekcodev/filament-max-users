@@ -7,13 +7,18 @@ namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
+use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
+use GeekCo\FilamentMaxUsers\Support\UserPresenter;
 use GeekCo\LaravelMaxClient\Models\MaxUser;
 use GeekCo\LaravelMaxClient\Services\MaxUserProfileService;
+use GeekCo\MaxPhpClient\Enum\ChatType;
+use Illuminate\Database\Eloquent\Model;
 
 class ViewMaxUser extends ViewRecord
 {
@@ -37,23 +42,57 @@ class ViewMaxUser extends ViewRecord
                 IconEntry::make('is_bot')
                     ->label(__('filament-max-users::users.view.is_bot'))
                     ->boolean(),
-                TextEntry::make('last_activity_time')
-                    ->label(__('filament-max-users::users.view.last_activity_time'))
-                    ->dateTime('d.m.Y H:i:s'),
                 TextEntry::make('name')
                     ->label(__('filament-max-users::users.view.name')),
                 TextEntry::make('description')
-                    ->label(__('filament-max-users::users.view.description')),
+                    ->label(__('filament-max-users::users.view.description'))
+                    ->columnSpanFull(),
                 TextEntry::make('phone')
-                    ->label(__('filament-max-users::users.view.phone')),
+                    ->label(__('filament-max-users::users.view.phone'))
+                    ->icon(fn (Model $record): ?string => UserPresenter::phoneIcon($record))
+                    ->tooltip(UserPresenter::phoneTooltip()),
+                TextEntry::make('phone_verified_at')
+                    ->label(__('filament-max-users::users.view.phone_verified_at'))
+                    ->dateTime('d.m.Y H:i:s')
+                    ->placeholder(__('filament-max-users::users.view.phone_unverified')),
                 TextEntry::make('email')
                     ->label(__('filament-max-users::users.view.email')),
+                TextEntry::make('last_activity_time')
+                    ->label(__('filament-max-users::users.view.last_activity_time'))
+                    ->dateTime('d.m.Y H:i:s'),
                 TextEntry::make('profile_checked_at')
                     ->label(__('filament-max-users::users.view.profile_checked_at'))
-                    ->dateTime('d.m.Y H:i:s'),
-                TextEntry::make('max_chats_count')
-                    ->label(__('filament-max-users::users.view.chats_count'))
-                    ->counts('maxChats'),
+                    ->dateTime('d.m.Y H:i:s')
+                    ->placeholder(__('filament-max-users::users.view.never_checked')),
+                RepeatableEntry::make('maxChats')
+                    ->label(__('filament-max-users::users.view.chats'))
+                    ->schema([
+                        TextEntry::make('displayName')
+                            ->label(__('filament-max-users::users.view.chat_name'))
+                            ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record)),
+                        TextEntry::make('chat_id')
+                            ->label(__('filament-max-users::users.view.chat_id')),
+                        TextEntry::make('chat_type')
+                            ->label(__('filament-max-users::users.view.chat_type'))
+                            ->badge()
+                            ->color(static fn (?ChatType $state): string => match ($state) {
+                                ChatType::Dialog => 'info',
+                                ChatType::Chat => 'success',
+                                ChatType::Channel => 'warning',
+                                null => 'gray',
+                            })
+                            ->formatStateUsing(static fn (?ChatType $state): string => match ($state) {
+                                ChatType::Dialog => __('filament-max-users::chats.chat_type.dialog'),
+                                ChatType::Chat => __('filament-max-users::chats.chat_type.group'),
+                                ChatType::Channel => __('filament-max-users::chats.chat_type.channel'),
+                                null => __('filament-max-users::chats.chat_type.unknown'),
+                            }),
+                        TextEntry::make('last_activity_at')
+                            ->label(__('filament-max-users::users.view.chat_last_activity_at'))
+                            ->dateTime('d.m.Y H:i:s'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
             ]);
     }
 

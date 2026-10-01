@@ -24,7 +24,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: dom, libxml, fileinfo
-          coverage: none
+          coverage: xdebug
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -35,8 +35,10 @@ jobs:
       - name: PHPStan
         run: composer analyse
 
-      - name: Tests
-        run: composer test
+      - name: Tests and coverage
+        run: composer coverage
+        env:
+          XDEBUG_MODE: coverage
 
       - name: Security audit
         run: composer security-audit
