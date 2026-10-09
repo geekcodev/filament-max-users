@@ -19,22 +19,15 @@ class MaxChatsTable
     {
         return $table
             ->columns([
-                ImageColumn::make('icon_url')
-                    ->label(__('filament-max-users::chats.table.icon'))
-                    ->circular()
-                    ->limit(30)
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('displayName')
-                    ->label(__('filament-max-users::chats.table.display_name'))
-                    ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record))
-                    ->searchable(['title']),
                 TextColumn::make('chat_id')
                     ->label(__('filament-max-users::chats.table.chat_id'))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('chat_type')
                     ->label(__('filament-max-users::chats.table.chat_type'))
                     ->badge()
                     ->sortable()
+                    ->toggleable()
                     ->color(static fn (?ChatType $state): string => match ($state) {
                         ChatType::Dialog => 'info',
                         ChatType::Chat => 'success',
@@ -47,29 +40,53 @@ class MaxChatsTable
                         ChatType::Channel => __('filament-max-users::chats.chat_type.channel'),
                         null => __('filament-max-users::chats.chat_type.unknown'),
                     }),
-                TextColumn::make('chat_users_count')
-                    ->label(__('filament-max-users::chats.table.users_count'))
-                    ->counts('chatUsers')
-                    ->sortable(),
                 TextColumn::make('status')
                     ->label(__('filament-max-users::chats.table.status'))
                     ->badge()
                     ->sortable()
+                    ->toggleable()
                     ->color(static fn (MaxChatStatus $state): string => match ($state) {
                         MaxChatStatus::Active => 'success',
                         MaxChatStatus::Stopped => 'warning',
                         MaxChatStatus::Removed => 'danger',
                     })
                     ->formatStateUsing(static fn (MaxChatStatus $state): string => $state->label()),
-                TextColumn::make('last_activity_at')
-                    ->label(__('filament-max-users::chats.table.last_activity_at'))
-                    ->dateTime('d.m.Y H:i')
-                    ->sortable(),
+                ImageColumn::make('icon_url')
+                    ->label(__('filament-max-users::chats.table.icon'))
+                    ->circular()
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('displayName')
+                    ->label(__('filament-max-users::chats.table.display_name'))
+                    ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record))
+                    ->searchable(['title'])
+                    ->toggleable(),
                 TextColumn::make('title')
                     ->label(__('filament-max-users::chats.table.title'))
                     ->sortable()
                     ->placeholder(__('filament-max-users::chats.title.unknown'))
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('description')
+                    ->label(__('filament-max-users::chats.table.description'))
+                    ->limit(50)
+                    ->placeholder(__('filament-max-users::chats.title.unknown'))
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('link')
+                    ->label(__('filament-max-users::chats.table.link'))
+                    ->url(static fn (?string $state): ?string => ChatPresenter::safeUrl($state))
+                    ->openUrlInNewTab()
+                    ->placeholder(__('filament-max-users::chats.title.unknown'))
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('chat_users_count')
+                    ->label(__('filament-max-users::chats.table.users_count'))
+                    ->counts('chatUsers')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('last_activity_at')
+                    ->label(__('filament-max-users::chats.table.last_activity_at'))
+                    ->dateTime('d.m.Y H:i')
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('chat_checked_at')
                     ->label(__('filament-max-users::chats.table.chat_checked_at'))
                     ->dateTime('d.m.Y H:i')

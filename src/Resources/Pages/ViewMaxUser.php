@@ -28,20 +28,20 @@ class ViewMaxUser extends ViewRecord
     {
         return $schema
             ->schema([
+                TextEntry::make('user_id')
+                    ->label(__('filament-max-users::users.view.user_id')),
+                IconEntry::make('is_bot')
+                    ->label(__('filament-max-users::users.view.is_bot'))
+                    ->boolean(),
                 ImageEntry::make('avatar_url')
                     ->label(__('filament-max-users::users.view.avatar_url'))
                     ->circular(),
-                TextEntry::make('user_id')
-                    ->label(__('filament-max-users::users.view.user_id')),
+                TextEntry::make('username')
+                    ->label(__('filament-max-users::users.view.username')),
                 TextEntry::make('first_name')
                     ->label(__('filament-max-users::users.view.first_name')),
                 TextEntry::make('last_name')
                     ->label(__('filament-max-users::users.view.last_name')),
-                TextEntry::make('username')
-                    ->label(__('filament-max-users::users.view.username')),
-                IconEntry::make('is_bot')
-                    ->label(__('filament-max-users::users.view.is_bot'))
-                    ->boolean(),
                 TextEntry::make('name')
                     ->label(__('filament-max-users::users.view.name')),
                 TextEntry::make('description')

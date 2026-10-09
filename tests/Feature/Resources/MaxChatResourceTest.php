@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 
+use Filament\Infolists\Components\Entry;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\TestUser;
 use GeekCo\FilamentMaxUsers\Tests\TestCase;
@@ -57,6 +58,45 @@ class MaxChatResourceTest extends TestCase
             ->assertSuccessful()
             ->assertCanSeeTableRecords([$chat])
             ->assertTableColumnStateSet('displayName', 'Релизы', $chat);
+    }
+
+    public function test_list_shows_columns_in_expected_default_order(): void
+    {
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class, $instance);
+
+        $columns = $instance->getTable()->getVisibleColumns();
+
+        self::assertSame(
+            ['chat_id', 'chat_type', 'status', 'displayName', 'chat_users_count', 'last_activity_at'],
+            array_keys($columns),
+        );
+    }
+
+    public function test_list_exposes_every_column_as_toggleable(): void
+    {
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class, $instance);
+
+        $columns = $instance->getTable()->getColumns();
+
+        self::assertSame(
+            [
+                'chat_id', 'chat_type', 'status', 'icon_url', 'displayName', 'title', 'description',
+                'link', 'chat_users_count', 'last_activity_at', 'chat_checked_at',
+            ],
+            array_keys($columns),
+        );
+
+        foreach ($columns as $column) {
+            self::assertTrue($column->isToggleable(), $column->getName());
+        }
     }
 
     public function test_list_falls_back_to_linked_user_name_for_dialog(): void
@@ -114,6 +154,36 @@ class MaxChatResourceTest extends TestCase
             ->assertSee('ChatUser');
     }
 
+    public function test_view_page_shows_entries_in_expected_order(): void
+    {
+        $chat = $this->makeChat(3013);
+
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id]);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, $instance);
+
+        $schema = $instance->getSchema('infolist');
+        self::assertNotNull($schema);
+
+        $names = [];
+
+        foreach ($schema->getComponents() as $entry) {
+            if ($entry instanceof Entry) {
+                $names[] = $entry->getName();
+            }
+        }
+
+        self::assertSame(
+            [
+                'chat_id', 'icon_url', 'chat_type', 'status', 'displayName', 'description', 'link',
+                'last_activity_at', 'chat_checked_at', 'chatUsers',
+            ],
+            $names,
+        );
+    }
+
     public function test_refresh_metadata_action_is_hidden_without_permission(): void
     {
         $this->user->update(['can_manage_chats' => false]);
@@ -149,6 +219,24 @@ class MaxChatResourceTest extends TestCase
         $this->assertSame('https://max.ru/icon.png', $fresh->icon_url);
         $this->assertSame(1, $http->callCount);
         $this->assertSame(1, MaxChat::query()->count());
+    }
+
+    public function test_refresh_metadata_action_parses_group_participants_map(): void
+    {
+        $chat = $this->makeChat(3011);
+
+        $http = $this->fakeMaxApi($this->chatResponse(3011, 'chat', [
+            'title' => 'Группа из MAX',
+            'participants' => ['2001' => 1700000000000, '2002' => 1700000005000],
+            'participants_count' => 2,
+        ]));
+
+        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+            ->callAction('refreshChat')
+            ->assertNotified();
+
+        $this->assertSame('Группа из MAX', $chat->fresh()?->title);
+        $this->assertSame(1, $http->callCount);
     }
 
     public function test_refresh_metadata_action_reports_api_failure(): void

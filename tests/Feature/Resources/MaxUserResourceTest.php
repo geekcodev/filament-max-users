@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 
+use Filament\Infolists\Components\Entry;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\TestUser;
 use GeekCo\FilamentMaxUsers\Tests\TestCase;
@@ -77,6 +78,46 @@ class MaxUserResourceTest extends TestCase
             ->assertCanSeeTableRecords(MaxUser::all());
     }
 
+    public function test_list_shows_columns_in_expected_default_order(): void
+    {
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers::class, $instance);
+
+        $columns = $instance->getTable()->getVisibleColumns();
+
+        self::assertSame(
+            ['user_id', 'is_bot', 'avatar_url', 'first_name', 'last_name', 'phone', 'chat_links_count'],
+            array_keys($columns),
+        );
+    }
+
+    public function test_list_exposes_every_column_as_toggleable(): void
+    {
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers::class, $instance);
+
+        $columns = $instance->getTable()->getColumns();
+
+        self::assertSame(
+            [
+                'user_id', 'is_bot', 'avatar_url', 'full_avatar_url', 'first_name', 'last_name',
+                'name', 'description', 'username', 'phone', 'phone_verified_at', 'email',
+                'chat_links_count', 'last_activity_time', 'profile_checked_at',
+            ],
+            array_keys($columns),
+        );
+
+        foreach ($columns as $column) {
+            self::assertTrue($column->isToggleable(), $column->getName());
+        }
+    }
+
     public function test_list_shows_contact_data_and_chats_count(): void
     {
         $user = MaxUser::create([
@@ -133,6 +174,41 @@ class MaxUserResourceTest extends TestCase
         Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxUser::class, ['record' => $user->user_id])
             ->assertSuccessful()
             ->assertSee('+79991234567');
+    }
+
+    public function test_view_page_shows_entries_in_expected_order(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1010,
+            'first_name' => 'Ordered',
+            'is_bot' => false,
+        ]);
+
+        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxUser::class, ['record' => $user->user_id]);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxUser::class, $instance);
+
+        $schema = $instance->getSchema('infolist');
+        self::assertNotNull($schema);
+
+        $names = [];
+
+        foreach ($schema->getComponents() as $entry) {
+            if ($entry instanceof Entry) {
+                $names[] = $entry->getName();
+            }
+        }
+
+        self::assertSame(
+            [
+                'user_id', 'is_bot', 'avatar_url', 'username', 'first_name', 'last_name',
+                'name', 'description', 'phone', 'phone_verified_at', 'email',
+                'last_activity_time', 'profile_checked_at', 'maxChats',
+            ],
+            $names,
+        );
     }
 
     public function test_view_page_lists_chats_of_user(): void

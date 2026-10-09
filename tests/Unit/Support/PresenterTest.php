@@ -122,6 +122,42 @@ class PresenterTest extends TestCase
         ]];
     }
 
+    #[DataProvider('chatUrls')]
+    public function testSafeUrlKeepsHttpAndBlocksUnsafeSchemes(?string $expected, ?string $url): void
+    {
+        $this->assertSame($expected, ChatPresenter::safeUrl($url));
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?string}>
+     */
+    public static function chatUrls(): iterable
+    {
+        yield 'https' => ['https://max.ru/chat', 'https://max.ru/chat'];
+
+        yield 'http' => ['http://max.ru/chat', 'http://max.ru/chat'];
+
+        yield 'регистр схемы' => ['HTTPS://max.ru/chat', 'HTTPS://max.ru/chat'];
+
+        yield 'пробелы по краям' => ['https://max.ru/chat', "  https://max.ru/chat\t"];
+
+        yield 'javascript' => [null, 'javascript:alert(1)'];
+
+        yield 'javascript с пробелами' => [null, " \n\tjavascript:alert(1)"];
+
+        yield 'data' => [null, 'data:text/html;base64,PHNjcmlwdD4='];
+
+        yield 'mailto' => [null, 'mailto:dev@example.com'];
+
+        yield 'без схемы' => [null, 'max.ru/chat'];
+
+        yield 'битый url' => [null, 'http:///::'];
+
+        yield 'пустая строка' => [null, ''];
+
+        yield 'null' => [null, null];
+    }
+
     private function makeChat(int $chatId, ?ChatType $chatType, ?string $title = null): MaxChat
     {
         return MaxChat::create([

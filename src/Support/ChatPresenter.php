@@ -38,6 +38,28 @@ final class ChatPresenter
     }
 
     /**
+     * Ссылка чата для href: только http/https, иначе null.
+     *
+     * Значение приходит из MAX API и уходит в href без дополнительной проверки,
+     * поэтому схему фильтруем здесь: javascript:/data: стали бы XSS при клике.
+     */
+    public static function safeUrl(?string $url): ?string
+    {
+        if ($url === null) {
+            return null;
+        }
+
+        $trimmed = \trim($url);
+        $scheme = \parse_url($trimmed, \PHP_URL_SCHEME);
+
+        if (!\is_string($scheme)) {
+            return null;
+        }
+
+        return \in_array(\strtolower($scheme), ['http', 'https'], true) ? $trimmed : null;
+    }
+
+    /**
      * Есть ли у записи метаданные, полученные через getChat.
      */
     public static function hasMetadata(Model $record): bool

@@ -18,6 +18,8 @@ return [
         'chat_type'       => 'Type',
         'users_count'     => 'Users',
         'status'          => 'Status',
+        'description'     => 'Description',
+        'link'            => 'Link',
         'last_activity_at' => 'Last activity',
         'chat_checked_at' => 'Metadata checked',
         'filter_chat_type' => 'Chat type',
@@ -37,7 +39,6 @@ return [
     ],
 
     'view' => [
-        'title'              => 'Chat details',
         'display_name'       => 'Name',
         'chat_id'            => 'Chat ID',
         'chat_type'          => 'Chat type',
