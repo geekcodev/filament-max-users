@@ -18,6 +18,8 @@ return [
         'chat_type'       => 'Тип',
         'users_count'     => 'Пользователей',
         'status'          => 'Статус',
+        'description'     => 'Описание',
+        'link'            => 'Ссылка',
         'last_activity_at' => 'Последняя активность',
         'chat_checked_at' => 'Метаданные обновлены',
         'filter_chat_type' => 'Тип чата',
@@ -37,7 +39,6 @@ return [
     ],
 
     'view' => [
-        'title'              => 'Детали чата',
         'display_name'       => 'Название',
         'chat_id'            => 'Chat ID',
         'chat_type'          => 'Тип чата',

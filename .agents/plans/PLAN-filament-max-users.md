@@ -201,9 +201,16 @@ return [
 - Модель — `users_model` (`MaxUser`).
 - Связь для счётчика чатов — `MaxUser::maxChats()` (HasMany по `user_id`).
 - Страницы: `ListMaxUsers`, `ViewMaxUser`.
-- Список (таблица): имя (first/last), `username`, `is_bot` (badge), `last_activity_time`, кол-во чатов
-  (`withCount('maxChats')`), аватар (ImageColumn, при наличии).
-- Просмотр: полный профиль (все поля), счётчик чатов, Action «Обновить из MAX» → `MaxUserProfileService::refresh()`.
+- Список (таблица): видимы по умолчанию `user_id`, `is_bot` (badge «Бот»/«Пользователь»), аватар, имя, фамилия, телефон
+  (иконка по `phone_verified_at`), кол-во чатов (`counts('chatLinks')`). **Все колонки `toggleable`** — пользователь сам
+  включает/выключает их тулбаром колонок; дополнительно в составе (скрыты по умолчанию):
+  `full_avatar_url`, `name`, `description`, `username`, `phone_verified_at`, `email`, `last_activity_time`,
+  `profile_checked_at`. Состав и видимый порядок закреплены тестами (`..._expected_default_order`,
+  `..._exposes_every_column_as_toggleable`).
+- Просмотр: полный профиль в порядке `user_id` → `is_bot` → аватар → `username` → имя → фамилия → отображаемое имя →
+  описание → телефон → `phone_verified_at` → почта → последняя активность →
+  `profile_checked_at`, затем счётчик и список чатов (закреплено тестом); подпись `username` в ru — «Никнейм». Action
+  «Обновить из MAX» → `MaxUserProfileService::refresh()`.
 - Действия: только просмотр + обновление профиля. Редактирование/создание — нет.
 
 ## 7. Раздел «Max чаты» (`MaxChatResource`)
@@ -211,9 +218,15 @@ return [
 - Модель — `chats_model` (`MaxChat`).
 - Связь — `MaxChat::maxUser()` (BelongsTo по `user_id`).
 - Страницы: `ListMaxChats`, `ViewMaxChat`.
-- Список: `chat_id`, `user_id`, `status` (badge), `last_activity_at`, связанный пользователь (имя).
-- Просмотр: данные реестра + детали чата из MAX (`ApiClient::getChat`) при доступности; опционально форма с инфо, без
-  редактирования.
+- Список (таблица) в порядке колонок: `chat_id`, `chat_type` (badge), `status` (badge), `displayName`
+  (presenter: title / имя собеседника / `chat_id`), `chat_users_count` (`counts('chatUsers')`), `last_activity_at`)
+  — видимы по умолчанию. **Все колонки `toggleable`**: дополнительно в составе, но скрыты — `icon_url`, `title`,
+  `description`, `link`, `chat_checked_at`. Состав и видимый порядок закреплены тестами (`..._expected_default_order`,
+  `..._exposes_every_column_as_toggleable`).
+- Просмотр: `chat_id` → иконка → тип → статус → `displayName` → описание → ссылка → `last_activity_at` →
+  `chat_checked_at`, затем участники (закреплено тестом). Поле raw `title` («Название из MAX») на просмотре не
+  показывается — оно дублирует `displayName` у групп и пусто у диалогов; в списке остаётся скрытой колонкой. Данные чата
+  из MAX — действие «Обновить из MAX» → `MaxChatProfileService::sync()`.
 - Действия: удаление записи чата из локального реестра (`max_chats`) — по праву `chats.delete`. Редактирования нет.
 
 ---
@@ -355,6 +368,24 @@ return [
   `composer.lock` в `.ci-sim/`, выполнить там `composer install` и Gate — каталог после проверки удалить. Отражено в
   gotcha 13 и 14.
 
+### 11.3 Подготовка релиза v1.1.1 (сессия 2026-10-08, четвёртая)
+
+> Релиз объединяет четыре блока ветки: порядок/состав колонок обоих разделов, infolistы, фикс карты участников
+> (`max-php-client` 1.1.9) и бамп `filament` 5.9.0. Перед релизом — сверка документации и аудит по чек-листу.
+
+- [x] **36.** Аудит против `AGENTS.md`/best practices/OWASP: расхождения устранены — `.env.example`
+  (добавлен `FILAMENT_MAX_USERS_NAVIGATION_GROUP=Max`), блок config в README (env, `navigation_label`, `label`,
+  `plural_label`), `.gitattributes` (dev-конфиги по образцу `filament-max-broadcasts`), запись v1.1.1 в «История
+  изменений» и упоминание toggleable-колонок в «Что показывается».
+- [x] **37.** A03: `ChatPresenter::safeUrl()` (только http/https в href, иначе `null`) применён к колонке `link`
+  списка чатов и infolist страницы чата; 12 unit-кейсов в `PresenterTest`.
+- [x] **38.** Release notes `RELEASE_NOTES_v1.1.1.md` сверены с фактическим diff (все четыре блока, исправлена
+  формулировка про тесты, цифры Gate обновлены: 54/54, покрытие 97.47%).
+- [x] **39.** Gate целиком: lint 0/22, PHPStan max 0, PHPUnit 54/54 (187), покрытие 97.47%, audit 0; рабочая память
+  обновлена (сессия `2026-10-08-release-prep-v1.1.1.md`, `JOURNAL.md`, план).
+- [ ] **40.** Коммит/тег/push — **только по явному запросу пользователя** (правило AGENTS); при коммите снять устаревшие
+  `AD`-записи индекса (`git rm --cached` для старых журналов и `RELEASE-v1.0.0.md`), добавлять файлы явным списком.
+
 ---
 
 ## 12. Журнал сессий
@@ -381,3 +412,9 @@ return [
 - [ ] Проверить в реальной панели хоста: рендер аватаров/иконок по внешним URL (max.ru), поведение `max:upgrade` на
   данных хоста и перенос старых прав `chats.*` (новая `chats.manage` в конфиге по умолчанию — хост должен выдать её
   админам).
+- [x] После публикации ядра `max-php-client` v1.1.9 (фикс карты `participants`, сессия 2026-10-08): vendor обновлён
+  (v1.1.8 → v1.1.9), добавлен feature-тест `test_refresh_metadata_action_parses_group_participants_map`
+  (карта участников в фикстуре ответа `getChat`), Gate прогнан целиком. Заодно `filament/filament` поднят 5.7.8 → 5.9.0
+  из-за advisory CVE-2026-104181 (audit снова 0), constraint `^5.0` не менялся.
+- [ ] Убедиться, что образы хоста содержат цепочку Минцифры (иначе `getChat` падает по TLS ещё до парсинга, см. сессию
+  2026-10-07), и проверить кнопку «Обновить из MAX» на проде i2tech после обновления пакета.

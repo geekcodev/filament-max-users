@@ -27,14 +27,11 @@ class ViewMaxChat extends ViewRecord
     {
         return $schema
             ->schema([
+                TextEntry::make('chat_id')
+                    ->label(__('filament-max-users::chats.view.chat_id')),
                 ImageEntry::make('icon_url')
                     ->label(__('filament-max-users::chats.view.icon_url'))
                     ->circular(),
-                TextEntry::make('displayName')
-                    ->label(__('filament-max-users::chats.view.display_name'))
-                    ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record)),
-                TextEntry::make('chat_id')
-                    ->label(__('filament-max-users::chats.view.chat_id')),
                 TextEntry::make('chat_type')
                     ->label(__('filament-max-users::chats.view.chat_type'))
                     ->badge()
@@ -50,18 +47,6 @@ class ViewMaxChat extends ViewRecord
                         ChatType::Channel => __('filament-max-users::chats.chat_type.channel'),
                         null => __('filament-max-users::chats.chat_type.unknown'),
                     }),
-                TextEntry::make('title')
-                    ->label(__('filament-max-users::chats.view.title'))
-                    ->placeholder(__('filament-max-users::chats.title.unknown')),
-                TextEntry::make('description')
-                    ->label(__('filament-max-users::chats.view.description'))
-                    ->placeholder(__('filament-max-users::chats.title.unknown'))
-                    ->columnSpanFull(),
-                TextEntry::make('link')
-                    ->label(__('filament-max-users::chats.view.link'))
-                    ->url(fn (?string $state): ?string => $state)
-                    ->openUrlInNewTab()
-                    ->placeholder(__('filament-max-users::chats.title.unknown')),
                 TextEntry::make('status')
                     ->label(__('filament-max-users::chats.view.status'))
                     ->badge()
@@ -71,6 +56,18 @@ class ViewMaxChat extends ViewRecord
                         MaxChatStatus::Removed => 'danger',
                     })
                     ->formatStateUsing(static fn (MaxChatStatus $state): string => $state->label()),
+                TextEntry::make('displayName')
+                    ->label(__('filament-max-users::chats.view.display_name'))
+                    ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record)),
+                TextEntry::make('description')
+                    ->label(__('filament-max-users::chats.view.description'))
+                    ->placeholder(__('filament-max-users::chats.title.unknown'))
+                    ->columnSpanFull(),
+                TextEntry::make('link')
+                    ->label(__('filament-max-users::chats.view.link'))
+                    ->url(static fn (?string $state): ?string => ChatPresenter::safeUrl($state))
+                    ->openUrlInNewTab()
+                    ->placeholder(__('filament-max-users::chats.title.unknown')),
                 TextEntry::make('last_activity_at')
                     ->label(__('filament-max-users::chats.view.last_activity_at'))
                     ->dateTime('d.m.Y H:i:s'),

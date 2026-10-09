@@ -82,16 +82,22 @@ return [
     'chats_model' => GeekCo\LaravelMaxClient\Models\MaxChat::class,
 
     'ui' => [
-        'navigation_group' => 'Max',
+        'navigation_group' => env('FILAMENT_MAX_USERS_NAVIGATION_GROUP', 'Max'),
         'users' => [
-            'navigation_icon' => 'heroicon-o-users',
-            'navigation_sort' => 1,
-            'slug' => 'max-users',
+            'navigation_icon'  => 'heroicon-o-users',
+            'navigation_sort'  => 1,
+            'navigation_label' => null,
+            'label'            => 'Max пользователь',
+            'plural_label'     => 'Max пользователи',
+            'slug'             => 'max-users',
         ],
         'chats' => [
-            'navigation_icon' => 'heroicon-o-chat-bubble-left-right',
-            'navigation_sort' => 2,
-            'slug' => 'max-chats',
+            'navigation_icon'  => 'heroicon-o-chat-bubble-left-right',
+            'navigation_sort'  => 2,
+            'navigation_label' => null,
+            'label'            => 'Max чат',
+            'plural_label'     => 'Max чаты',
+            'slug'             => 'max-chats',
         ],
     ],
 ];
@@ -110,6 +116,9 @@ return [
 | `chats.delete` | Удаление записи чата из локального реестра   |
 
 ## Что показывается
+
+В списках по умолчанию видны основные колонки; полный состав, включая скрытые, включается тулбаром переключения
+колонок.
 
 ### Пользователи
 
@@ -142,6 +151,14 @@ return [
 `max_chat_users`: внешних ключей между таблицами нет, поэтому связи удаляются явно. Данные в самом MAX не затрагиваются.
 
 ## История изменений
+
+### v1.1.1
+
+Порядок и полный состав колонок в списках «Max пользователи» и «Max чаты» заданы явно, все колонки стали
+переключаемыми, страницы просмотра перестроены по полям, русская подпись `username` стала «Никнейм». Действие
+«Обновить из MAX» у чатов больше не падает на группах (участники приходят картой, фикс в `max-php-client` 1.1.9),
+зависимость `filament/filament` поднята 5.7.8 → 5.9.0 (advisory CVE), ссылка чата рендерится только для http/https.
+Подробности — `.agents/release/RELEASE_NOTES_v1.1.1.md`.
 
 ### v1.1.0
 
