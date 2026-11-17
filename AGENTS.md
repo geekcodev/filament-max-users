@@ -31,8 +31,9 @@
 `composer.json`, реально установленная — `composer show geekcodev/laravel-max-client` (и `geekcodev/max-php-client`),
 релизные теги — `git tag --sort=-v:refname` в этом репозитории и в соседнем `../laravel-max-client`.
 
-Текущий минимум: `laravel-max-client ^1.2.0` и `max-php-client ^1.1.8`. `^1.2.0` обязателен не по привычке: начиная с
-этой версии реестр перешёл на **новую форму** — одна строка на чат, PK `chat_id`, связи вынесены в `max_chat_users`. На
+Целевые constraints: `laravel-max-client ^2.0` и `max-php-client ^2.0`; пока теги `v2.0.0` не выпущены, ветка `new`
+ставит обе зависимости как `dev-new` из Packagist. `^1.2.0` обязателен не по привычке: начиная с этой версии реестр
+перешёл на **новую форму** — одна строка на чат, PK `chat_id`, связи вынесены в `max_chat_users`. На
 `1.1.x` модели `MaxChat`/`MaxChatUser` не имеют `title`, `chat_type`, `chat_checked_at`, `status`, поэтому ресурсы
 разваливаются (AttributeError на отсутствующих колонках) — понижать constraint нельзя.
 
