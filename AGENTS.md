@@ -13,15 +13,18 @@
   MAX). Репозиторий/рабочая папка — `filament-max-users`, переиспользуемый автономный пакет.
 - **Что даёт.** Два Filament-ресурса из одного плагина:
     - `MaxUserResource` («Max пользователи») — список и детальный просмотр пользователей `max_users`, счётчик чатов, в
-      которых состоит пользователь, контакты (телефон/email/аватары), действие «Обновить из MAX»;
+      которых состоит пользователь, контакты (телефон/email/аватары), действие «Обновить из MAX», редактирование профиля
+      и контактов в локальном реестре, удаление записи из реестра;
     - `MaxChatResource` («Max чаты») — список и детальный просмотр чатов `max_chats` (данные реестра + связанный
-      пользователь), метаданные чата из MAX API, участники, действие «Обновить из MAX» и удаление локальной записи чата.
-      Функции редактирования/создания **отсутствуют**: данные — источник Bot API MAX, плагин только показывает.
-- **Принцип.** Плагин самодостаточен для просмотра, но **не создаёт собственных таблиц** — источник истины по
-  пользователям/чатам — `laravel-max-client` (`max_users`, `max_chats`, модели `MaxUser`, `MaxChat`). От хост-приложения
-  он ожидает: опубликованные миграции laravel-max-client, выполненный `php artisan max:upgrade`, настроенный API-доступ
-  (токен) для действий «Обновить из MAX» и прав. Механизмы laravel-max-client не дублируются: профиль — только через
-  `MaxUserProfileService`, метаданные чата — только через `MaxChatProfileService`.
+      пользователь), метаданные чата из MAX API, участники, действие «Обновить из MAX», редактирование метаданных в
+      локальном реестре и удаление записи из реестра. Создание чатов отсутствует: данные — источник Bot API MAX.
+- **Принцип.** Плагин самодостаточен для просмотра и управления локальными записями пользователей и чатов, но **не
+  создаёт собственных таблиц** — источник истины по пользователям/чатам — `laravel-max-client` (`max_users`,
+  `max_chats`, модели `MaxUser`, `MaxChat`). От хост-приложения он ожидает: опубликованные миграции laravel-max-client,
+  выполненный
+  `php artisan max:upgrade`, настроенный API-доступ (токен) для действий «Обновить из MAX» и прав. Механизмы
+  laravel-max-client не дублируются: профиль — только через `MaxUserProfileService`, метаданные чата — только через
+  `MaxChatProfileService`.
 - **Лицензия.** MIT (файл `LICENSE`).
 - **Язык.** Рабочий язык общения с пользователем — **русский**; подписи UI — через lang-файлы (`lang/ru`, `lang/en`).
 
@@ -87,8 +90,9 @@
 8. Текст в Markdown-файлах (AGENTS.md, README.md, release-notes и др.) пиши как человек: связный текст, абзацы, а не
    сплошные списки из буллетов. Списки — только когда действительно перечисляешь однородные пункты (Gate, gotchas,
    чек-лист).
-9. `.env.example` — единственный эталон имён переменных плагина; при добавлении новой `FILAMENT_MAX_USERS_*` переменной
-   синхронизируй его и `config/filament-max-users.php`.
+9. Плагин не использует env-переменные, `.env.example` в репозитории нет. Если появится новая `FILAMENT_MAX_USERS_*`
+   переменная — добавь `.env.example`, синхронизируй его с `config/filament-max-users.php` и верни файл в структуру и
+   чек-лист.
 10. Любой ключ перевода, который ты добавил в код, обязан существовать и в `lang/ru`, и в `lang/en` — иначе UI покажет
     сырые ключи, а тесты этого не поймают.
 11. По завершении каждой сессии заноси итог по формату из 4.1: строка в `.agents/JOURNAL.md` + файл в
@@ -112,8 +116,12 @@ src/
   Resources/
     MaxUserResource.php                Filament-ресурс «Max пользователи»
     MaxChatResource.php                Filament-ресурс «Max чаты»
-    (Pages/ListMaxUsers, ViewMaxUser, ListMaxChats, ViewMaxChat)
-    (Tables/..., Schemas/... по образцу filament-max-broadcasts)
+    (Pages/ListMaxUsers, ViewMaxUser, EditMaxUser, ListMaxChats, ViewMaxChat, EditMaxChat)
+    Actions/DeleteMaxUserAction.php    удаление пользователя вместе со связями max_chat_users
+    Actions/DeleteMaxChatAction.php    удаление чата вместе со связями max_chat_users
+    Schemas/MaxUserForm.php            форма редактирования профиля и контактов
+    Schemas/MaxChatForm.php            форма редактирования метаданных чата
+    (Tables/... по образцу filament-max-broadcasts)
   Support/ChatPresenter.php            название чата: title / имя собеседника / chat_id
   Support/UserPresenter.php            иконка телефона по phone_verified_at
 tests/                              PHPUnit + Orchestra Testbench
@@ -131,7 +139,6 @@ phpunit.xml                           failOnRisky/failOnWarning; SQLite in-memor
 phpstan.neon                          level max (Larastan), configDirectories → config/
 phpstan-baseline.neon                 только test-only записи для Filament/Livewire-assertion хелперов
 .php-cs-fixer.dist.php                PSR-12 + declare_strict_types + no_unused_imports (finder: src, tests, config, scripts)
-.env.example                          эталон имён переменных (FILAMENT_MAX_USERS_*)
 .gitattributes                        export-ignore для .agents/, tests/, .github/ и dev-конфигов: чистый dist
 .agents/                             рабочая память проекта: plans/, release/, journals/{JOURNAL.md, sessions/} (см. 4.1)
 ```
@@ -188,19 +195,25 @@ phpstan-baseline.neon                 только test-only записи для
 
 - **Подключение**: `->plugin(FilamentMaxUsersPlugin::make())` в PanelProvider. Регистрирует оба ресурса
   (`MaxUserResource`, `MaxChatResource`) в **одну navigation-группу** `Max` (`ui.navigation_group`).
-- **Модели**: `users_model` → `GeekCo\LaravelMaxClient\Models\MaxUser` (таблица `max_users`, PK `user_id`, связи
-  `chatLinks()` → `MaxChatUser` и `maxChats()` → `MaxChat`), `chats_model` → `GeekCo\LaravelMaxClient\Models\MaxChat`
-  (таблица `max_chats`, **PK `chat_id`**, связь `chatUsers()` → `MaxChatUser`). Конфигурируемы через
-  `config('filament-max-users.users_model')` / `chats_model`.
+- **Модели**: берутся из `laravel-max-client` — `config('laravel-max-client.users.model')` (по умолчанию
+  `GeekCo\LaravelMaxClient\Models\MaxUser`, таблица `max_users`, PK `user_id`, связи `chatLinks()` → `MaxChatUser` и
+  `maxChats()` → `MaxChat`) и `config('laravel-max-client.chats.model')` (по умолчанию
+  `GeekCo\LaravelMaxClient\Models\MaxChat`, таблица `max_chats`, **PK `chat_id`**, связь `chatUsers()` → `MaxChatUser`).
+  Своих ключей моделей у плагина нет — один источник истины в бридже, иначе Policy и ресурс смотрели бы на разные
+  классы.
 - **Форма реестра** (laravel-max-client ≥ 1.2, одна строка на чат): `max_chats.chat_id` + метаданные, `max_chat_users` —
   связь чата с пользователями (внешних ключей между таблицами нет). Плагин не создаёт схему сам.
 - **Обновление после обновления пакета**: два шага, порядок обязателен — `php artisan migrate`, затем
   `php artisan max:upgrade` (есть `--dry-run` и `--rollback`). Пропуск второго шага оставляет старую форму реестра, и
   ресурсы покажут пустые или битые данные.
-- **Права**: строки, `$user->can(...)` (совместимо со spatie/laravel-permission и Gate), конфигурируемы:
-  `users.view` (доступ к разделу пользователей), `users.manage` (действие «Обновить из MAX» для пользователя),
-  `chats.view` (доступ к разделу чатов), `chats.manage` (действие «Обновить из MAX» для чата), `chats.delete` (удаление
-  записи чата из локального реестра).
+- **Права**: Policy-классы `MaxUserPolicy` / `MaxChatPolicy`, permission-строки и их дефолты живут в
+  `laravel-max-client` (раздел 5 бриджа); провайдер бриджа регистрирует `Gate::policy()` для моделей из
+  `users.model` / `chats.model`. Плагин только привязывает ability к UI: `viewAny` → `canAccess()`, `view` →
+  `canView()`,
+  `edit` → `canEdit()`/страница редактирования, `delete` → `canDelete()`/удаление, `manage` → «Обновить из MAX». Код
+  ресурса — префикс permission-строки (`max_user.*` / `max_chat.*`), `create` в контракт не входит: реестр наполняется
+  вебхуками. Проверки идут через Gate (`Gate::allows('edit', $record)`) и fail-closed; без права раздел недоступен,
+  действие скрыто и отклоняется на сервере.
 - **Обновление профиля пользователя**: действие «Обновить из MAX» вызывает
   `GeekCo\LaravelMaxClient\Services\MaxUserProfileService::refresh($user_id)` (источник — `getChatMembers`).
 - **Обновление метаданных чата**: действие «Обновить из MAX» вызывает
@@ -215,11 +228,28 @@ phpstan-baseline.neon                 только test-only записи для
   диалога, иначе `chat_id`) и `Support\UserPresenter` (иконка телефона по `phone_verified_at`). Атрибуты читаются через
   `getAttribute()`, потому что модель хоста переопределяется конфигом; оба presenter покрыты unit-тестами на обоих
   вариантах (реальная `MaxChat` и посторонняя модель).
-- **Удаление**: запись `MaxChat` из локального реестра (`max_chats`) по праву `chats.delete`; перед удалением явно
-  удаляются строки `chatUsers()` — иначе связи остались бы висеть без чата. Удаление пользователей и удаление объектов в
-  самом MAX — **не** выполняем.
-- **Редактирование** отсутствует: `canCreate()`/`canEdit()` → `false` (в Filament это не поведение по умолчанию, см.
-  10).
+- **Локализация**: подписи ресурсов/полей/действий — `lang/{ru,en}` плагина; статусы чатов и fallback-название чата —
+  `laravel-max-client::*`; даты — формат панели Filament по локали (`->dateTime()` без жёсткой строки). Подписи в
+  конфиге по умолчанию `null`; паритет ключей `lang/ru` ↔ `lang/en` закреплён тестом.
+- **Удаление чата**: запись `MaxChat` из локального реестра (`max_chats`) по политике `delete` (`max_chat.delete`) в
+  транзакции вместе со строками `max_chat_users` (`Resources\Actions\DeleteMaxChatAction`, используется и в таблице, и
+  на страницах). Если на запись ссылается хост-приложение (внешний ключ), `QueryException` откатывает транзакцию,
+  действие показывает неудачу, а логирование идёт без PII. Удаление объектов в самом MAX — **не** выполняем.
+- **Удаление пользователя**: запись `MaxUser` из локального реестра (`max_users`) по политике `delete`
+  (`max_user.delete`) в транзакции вместе со строками `max_chat_users` (`Resources\Actions\DeleteMaxUserAction`,
+  используется и в таблице, и на страницах). Если на запись ссылается хост-приложение (внешний ключ), `QueryException`
+  откатывает транзакцию, действие показывает неудачу, а логирование идёт без PII. Удаление пользователя в самом MAX —
+  **не** выполняем.
+- **Редактирование пользователя**: отдельная страница `EditMaxUser` и форма `Resources\Schemas\MaxUserForm` по политике
+  `edit` (`max_user.edit`). Редактируются только профиль и контакты (`first_name`, `last_name`, `username`, `name`,
+  `description`, `phone`, `email`, `is_bot`); служебные поля (`user_id`, аватары, `last_activity_time`,
+  `phone_verified_at`, `profile_checked_at`) доступны только для чтения — их перезаписывает синхронизация.
+- **Редактирование чата**: отдельная страница `EditMaxChat` и форма `Resources\Schemas\MaxChatForm` по политике `edit`
+  (`max_chat.edit`). Редактируются только метаданные (`title`, `description`, `link`, `icon_url`); служебные поля
+  (`chat_id`, `chat_type`, `status`, `last_activity_at`, `chat_checked_at`) доступны только для чтения — тип и статус
+  ведёт реестр, отметки — синхронизация. `link` и `icon_url` валидируются как http/https.
+- **Создание** отсутствует у обоих ресурсов: `canCreate()` → `false` (в Filament создание разрешено по умолчанию, см.
+  10); политика `create` и permission-строка существуют для будущего UI и проверок в хосте.
 
 ### Соглашения
 
@@ -267,13 +297,14 @@ docker compose exec -T app composer security-audit
 
 ## 8. OWASP Top 10 (обязательно при написании кода)
 
-- **A01** — доступ к разделам и действиям только по правам (`permissions.*`); fail-closed, без прав — недоступно.
-  `canAccess()`/`canView()` проверяют право просмотра; действия («Обновить из MAX», «Удалить») — право manage/delete.
+- **A01** — доступ к разделам и действиям только по правам (`max_user.*` / `max_chat.*` из
+  `laravel-max-client`); fail-closed, без прав — недоступно. `canAccess()`/`canView()` проверяют право просмотра;
+  действия («Обновить из MAX», «Изменить», «Удалить») — права manage/edit/delete.
 - **A02** — секреты только в env; не логировать токены (`MAX_API_TOKEN`).
 - **A03** — ввод с API (имена, username, описания) выводится через экранирующие компоненты Filament (по умолчанию);
   никакой raw-HTML из внешних данных.
-- **A04** — удаление записи чата — серверная авторизация по праву, подтверждение на клиенте (`requiresConfirmation`); не
-  доверяем `record` из запроса без проверки прав.
+- **A04** — удаление записей чата и пользователя — серверная авторизация по праву, подтверждение на клиенте
+  (`requiresConfirmation`); не доверяем `record` из запроса без проверки прав.
 - **A05** — publishable-конфиг с безопасными дефолтами; секреты не в коде.
 - **A06** — `composer security-audit` в Gate; зависимости из lock-файла актуальны.
 - **A07** — права строкой через `$user->can(...)` (spatie/Gate); аутентификация/авторизация — за Filament.
@@ -302,8 +333,10 @@ docker compose exec -T app composer security-audit
    (`chat_users_count`) или пустой вызов ничего не считает; переименование связи в `laravel-max-client` ломает счётчик.
 4. **Filament v5, подписи**: `TextEntry::make('name')` в состоянии `false` не рендерится — тест «видно подпись» на
    `false`-значении не проходит и вводит в заблуждение; проверяй через значение атрибута, а не через наличие метки.
-5. **Read-only плагин**: у Filament-ресурса создание и редактирование разрешены по умолчанию. Для этого пакета
-   `canCreate()`/`canEdit()` обязаны возвращать `false`, иначе в UI появятся лишние кнопки.
+5. **Права и Policy**: у Filament-ресурса создание и редактирование разрешены по умолчанию. В этом пакете
+   `canCreate()` у обоих ресурсов возвращает `false`, а `canAccess()`/`canView()`/`canEdit()`/`canDelete()` идут через
+   Policy бриджа (`viewAny`/`view`/`edit`/`delete`). Если `laravel-max-client` не зарегистрировал Policy (например,
+   обновлён только плагин, а vendor бриджа старый), проверки fail-closed скроют раздел и действия.
 6. **final-сервисы не мокаются**: `MaxUserProfileService`/`MaxChatProfileService` объявлены `final`, `$this->mock()` на
    них падает. Подменяй транспорт `ClientInterface` (`tests/Fixtures/MockHttpClient.php`).
 7. **Порядок provider'ов в Testbench**: если Livewire регистрируется раньше Filament, хелперы `filament()::*` в тестах
@@ -331,6 +364,11 @@ docker compose exec -T app composer security-audit
     делает ровно то же (`composer.lock` в `.gitignore`). Каталог удаляется после проверки, в `.gitignore` не нужен.
 15. **Покрытие падает незаметно**: `composer test` не строит отчёт. После добавления кода гейт проверяет
     `composer coverage`; в контейнере нужен драйвер (`XDEBUG_MODE=coverage`), в CI — `coverage: xdebug`.
+16. **Права живут в бридже**: permission-строки, Policy-классы и их регистрация — в `laravel-max-client`
+    (`config/laravel-max-client.php`, `MAX_PERMISSION_*`, `Policies/`), не в этом пакете. Меняли права — обновляйте
+    бридж (конфиг, README, тесты) и синхронизируйте vendor бриджа, иначе плагин увидит старое поведение. Ключ
+    `view_any` в конфиге — потому что точка в ключе массива ломает `config()`; сама permission-строка остаётся
+    `max_user.view.any`.
 
 ## 11. Чек-лист перед завершением задачи
 
@@ -338,11 +376,11 @@ docker compose exec -T app composer security-audit
 - [ ] Новый код покрыт тестами (unit — presenters/вычисления, feature — ресурсы, действия, права, отказ при отсутствии
   прав).
 - [ ] Публичный API не сломан: сигнатуры, ключи конфига, ключи переводов и дефолты совместимы с patch-релизом.
-- [ ] Проверки прав fail-closed: без нужного `permissions.*` раздел недоступен, действие скрыто и отклоняется на
-  сервере.
+- [ ] Проверки прав fail-closed: без нужного права (`max_user.*` / `max_chat.*` из бриджа) раздел недоступен, действие
+  скрыто и отклоняется на сервере.
 - [ ] Нет прямых вызовов `ApiClient` из ресурсов/страниц; обновление идёт через сервисы laravel-max-client.
 - [ ] Каждый новый ключ перевода присутствует и в `lang/ru`, и в `lang/en`.
-- [ ] Секретов нет в коде, логах, коммитах; `README.md`, `.env.example` и `AGENTS.md` синхронны с кодом.
+- [ ] Секретов нет в коде, логах, коммитах; `README.md` и `AGENTS.md` синхронны с кодом.
 - [ ] Обновлены `.agents/plans/PLAN-filament-max-users.md` и `.agents/journals/` (строка в `JOURNAL.md` + файл в
   `sessions/` по формату 4.1).
 - [ ] Коммит/тег/push — только по явному запросу пользователя; иначе оставлено рабочее дерево и описан статус.

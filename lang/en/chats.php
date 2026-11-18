@@ -38,11 +38,21 @@ return [
         'never_checked'  => 'never requested',
     ],
 
+    'form' => [
+        'title'       => 'Title from MAX',
+        'description' => 'Description',
+        'link'        => 'Link',
+        'icon_url'    => 'Icon',
+    ],
+
+    'pages' => [
+        'edit_title' => 'Edit chat',
+    ],
+
     'view' => [
         'display_name'       => 'Name',
         'chat_id'            => 'Chat ID',
         'chat_type'          => 'Chat type',
-        'title'              => 'Name from MAX',
         'description'        => 'Description',
         'link'               => 'Link',
         'icon_url'           => 'Icon',
@@ -66,9 +76,11 @@ return [
         'refresh_failure'  => 'Failed to refresh chat metadata. Check the MAX token and API availability.',
         'delete'          => 'Delete record',
         'delete_heading'  => 'Delete chat record',
-        'delete_description' => 'Delete the chat record and its user links from the local registry. Data in MAX itself is not affected.',
+        'delete_description' => 'Delete the chat record and its user links from the local registry. Data in MAX itself is not affected. If the record is referenced by the application, deletion is rejected.',
         'delete_submit'   => 'Delete',
         'delete_success'  => 'Chat record deleted',
+        'delete_failure'  => 'The chat record could not be deleted: the record is referenced by the application.',
+        'edit_success'    => 'Chat metadata has been saved',
     ],
 
 ];

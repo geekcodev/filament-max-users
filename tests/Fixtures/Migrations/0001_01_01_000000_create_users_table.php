@@ -17,8 +17,11 @@ return new class () extends Migration {
             $table->string('password');
             $table->boolean('can_view_users')->default(false);
             $table->boolean('can_manage_users')->default(false);
+            $table->boolean('can_edit_users')->default(false);
+            $table->boolean('can_delete_users')->default(false);
             $table->boolean('can_view_chats')->default(false);
             $table->boolean('can_manage_chats')->default(false);
+            $table->boolean('can_edit_chats')->default(false);
             $table->boolean('can_delete_chats')->default(false);
             $table->rememberToken();
             $table->timestamps();

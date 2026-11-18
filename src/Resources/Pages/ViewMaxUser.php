@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -12,6 +13,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
+use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
@@ -19,6 +21,8 @@ use GeekCo\LaravelMaxClient\Models\MaxUser;
 use GeekCo\LaravelMaxClient\Services\MaxUserProfileService;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 
 class ViewMaxUser extends ViewRecord
 {
@@ -53,16 +57,17 @@ class ViewMaxUser extends ViewRecord
                     ->tooltip(UserPresenter::phoneTooltip()),
                 TextEntry::make('phone_verified_at')
                     ->label(__('filament-max-users::users.view.phone_verified_at'))
-                    ->dateTime('d.m.Y H:i:s')
+                    ->dateTime()
                     ->placeholder(__('filament-max-users::users.view.phone_unverified')),
                 TextEntry::make('email')
                     ->label(__('filament-max-users::users.view.email')),
                 TextEntry::make('last_activity_time')
                     ->label(__('filament-max-users::users.view.last_activity_time'))
-                    ->dateTime('d.m.Y H:i:s'),
+                    ->getStateUsing(static fn (Model $record): ?Carbon => UserPresenter::lastActivityAt($record))
+                    ->dateTime(),
                 TextEntry::make('profile_checked_at')
                     ->label(__('filament-max-users::users.view.profile_checked_at'))
-                    ->dateTime('d.m.Y H:i:s')
+                    ->dateTime()
                     ->placeholder(__('filament-max-users::users.view.never_checked')),
                 RepeatableEntry::make('maxChats')
                     ->label(__('filament-max-users::users.view.chats'))
@@ -89,7 +94,7 @@ class ViewMaxUser extends ViewRecord
                             }),
                         TextEntry::make('last_activity_at')
                             ->label(__('filament-max-users::users.view.chat_last_activity_at'))
-                            ->dateTime('d.m.Y H:i:s'),
+                            ->dateTime(),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
@@ -98,9 +103,9 @@ class ViewMaxUser extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        $managePermission = config()->string('filament-max-users.permissions.users.manage', 'users.manage');
-
         return [
+            EditAction::make()
+                ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
             Action::make('refresh')
                 ->label(__('filament-max-users::users.actions.refresh'))
                 ->icon('heroicon-o-arrow-path')
@@ -110,7 +115,7 @@ class ViewMaxUser extends ViewRecord
                 ->modalHeading(__('filament-max-users::users.actions.refresh_heading'))
                 ->modalDescription(__('filament-max-users::users.actions.refresh_description'))
                 ->modalSubmitActionLabel(__('filament-max-users::users.actions.refresh_submit'))
-                ->authorize($managePermission)
+                ->authorize(static fn (Model $record): bool => Gate::allows('manage', $record))
                 ->action(function (): void {
                     /** @var MaxUser $record */
                     $record = $this->getRecord();
@@ -136,6 +141,7 @@ class ViewMaxUser extends ViewRecord
                             ->send();
                     }
                 }),
+            DeleteMaxUserAction::make(),
         ];
     }
 }

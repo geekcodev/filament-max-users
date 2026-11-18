@@ -34,7 +34,15 @@ final class ChatPresenter
 
         $key = $record->getKey();
 
-        return \is_scalar($key) ? 'chat ' . $key : 'chat';
+        if (! \is_scalar($key)) {
+            $unknown = __('laravel-max-client::chat.unknown');
+
+            return \is_string($unknown) ? $unknown : 'chat';
+        }
+
+        $fallback = __('laravel-max-client::chat.fallback', ['id' => $key]);
+
+        return \is_string($fallback) ? $fallback : 'chat '.$key;
     }
 
     /**

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
+use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxChatAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
@@ -18,6 +20,7 @@ use GeekCo\LaravelMaxClient\Models\MaxChat;
 use GeekCo\LaravelMaxClient\Services\MaxChatProfileService;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class ViewMaxChat extends ViewRecord
 {
@@ -70,10 +73,10 @@ class ViewMaxChat extends ViewRecord
                     ->placeholder(__('filament-max-users::chats.title.unknown')),
                 TextEntry::make('last_activity_at')
                     ->label(__('filament-max-users::chats.view.last_activity_at'))
-                    ->dateTime('d.m.Y H:i:s'),
+                    ->dateTime(),
                 TextEntry::make('chat_checked_at')
                     ->label(__('filament-max-users::chats.view.chat_checked_at'))
-                    ->dateTime('d.m.Y H:i:s')
+                    ->dateTime()
                     ->placeholder(__('filament-max-users::chats.title.never_checked')),
                 RepeatableEntry::make('chatUsers')
                     ->label(__('filament-max-users::chats.view.users'))
@@ -95,7 +98,7 @@ class ViewMaxChat extends ViewRecord
                             ->formatStateUsing(static fn (MaxChatStatus $state): string => $state->label()),
                         TextEntry::make('last_activity_at')
                             ->label(__('filament-max-users::chats.view.user_last_activity_at'))
-                            ->dateTime('d.m.Y H:i:s'),
+                            ->dateTime(),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
@@ -105,8 +108,10 @@ class ViewMaxChat extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            EditAction::make()
+                ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
             $this->refreshMetadataAction(),
-            $this->deleteAction(),
+            DeleteMaxChatAction::make(),
         ];
     }
 
@@ -127,7 +132,7 @@ class ViewMaxChat extends ViewRecord
             ->modalHeading(__('filament-max-users::chats.actions.refresh_heading'))
             ->modalDescription(__('filament-max-users::chats.actions.refresh_description'))
             ->modalSubmitActionLabel(__('filament-max-users::chats.actions.refresh_submit'))
-            ->authorize(config()->string('filament-max-users.permissions.chats.manage', 'chats.manage'))
+            ->authorize(static fn (Model $record): bool => Gate::allows('manage', $record))
             ->action(function (): void {
                 /** @var MaxChat $record */
                 $record = $this->getRecord();
@@ -147,38 +152,6 @@ class ViewMaxChat extends ViewRecord
                         ->danger()
                         ->send();
                 }
-            });
-    }
-
-    /**
-     * Удалить запись реестра вместе со строками связи max_chat_users: внешних
-     * ключей между таблицами нет, поэтому связи удаляются явно, иначе они остались
-     * бы висеть без чата.
-     */
-    private function deleteAction(): Action
-    {
-        return Action::make('delete')
-            ->label(__('filament-max-users::chats.actions.delete'))
-            ->icon('heroicon-o-trash')
-            ->color('danger')
-            ->requiresConfirmation()
-            ->modalHeading(__('filament-max-users::chats.actions.delete_heading'))
-            ->modalDescription(__('filament-max-users::chats.actions.delete_description'))
-            ->modalSubmitActionLabel(__('filament-max-users::chats.actions.delete_submit'))
-            ->authorize(config()->string('filament-max-users.permissions.chats.delete', 'chats.delete'))
-            ->action(function (): void {
-                /** @var MaxChat $record */
-                $record = $this->getRecord();
-
-                $record->chatUsers()->delete();
-                $record->delete();
-
-                Notification::make()
-                    ->title(__('filament-max-users::chats.actions.delete_success'))
-                    ->success()
-                    ->send();
-
-                $this->redirect(MaxChatResource::getUrl('index'));
             });
     }
 }

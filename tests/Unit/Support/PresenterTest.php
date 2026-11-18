@@ -64,6 +64,10 @@ class PresenterTest extends TestCase
         $chat = $this->makeChat(12, null);
 
         $this->assertSame('chat 12', ChatPresenter::displayName($chat));
+
+        app()->setLocale('ru');
+
+        $this->assertSame('чат 12', ChatPresenter::displayName($chat));
         $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
@@ -81,6 +85,10 @@ class PresenterTest extends TestCase
         $chat = new MaxUser(['user_id' => 32]);
 
         $this->assertSame('chat 32', ChatPresenter::displayName($chat));
+
+        app()->setLocale('ru');
+
+        $this->assertSame('чат 32', ChatPresenter::displayName($chat));
         $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
@@ -89,6 +97,10 @@ class PresenterTest extends TestCase
         $chat = new MaxUser();
 
         $this->assertSame('chat', ChatPresenter::displayName($chat));
+
+        app()->setLocale('ru');
+
+        $this->assertSame('чат', ChatPresenter::displayName($chat));
         $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
@@ -156,6 +168,26 @@ class PresenterTest extends TestCase
         yield 'пустая строка' => [null, ''];
 
         yield 'null' => [null, null];
+    }
+
+    public function testLastActivityTimeIsConvertedFromMilliseconds(): void
+    {
+        $user = new MaxUser([
+            'user_id' => 1,
+            'last_activity_time' => 1700000000000,
+        ]);
+
+        $activity = UserPresenter::lastActivityAt($user);
+
+        $this->assertNotNull($activity);
+        $this->assertSame(1700000000, $activity->getTimestamp());
+    }
+
+    public function testLastActivityTimeIsNullWhenMissing(): void
+    {
+        $user = new MaxUser(['user_id' => 1]);
+
+        $this->assertNull(UserPresenter::lastActivityAt($user));
     }
 
     private function makeChat(int $chatId, ?ChatType $chatType, ?string $title = null): MaxChat

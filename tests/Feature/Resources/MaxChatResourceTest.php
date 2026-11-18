@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 
+use Filament\Forms\Components\Field;
 use Filament\Infolists\Components\Entry;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
+use GeekCo\FilamentMaxUsers\Resources\Pages\EditMaxChat;
+use GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats;
+use GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\TestUser;
 use GeekCo\FilamentMaxUsers\Tests\TestCase;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
@@ -14,6 +18,7 @@ use GeekCo\LaravelMaxClient\Models\MaxChatUser;
 use GeekCo\LaravelMaxClient\Models\MaxUser;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 class MaxChatResourceTest extends TestCase
@@ -30,6 +35,7 @@ class MaxChatResourceTest extends TestCase
             'password' => 'password',
             'can_view_chats' => true,
             'can_manage_chats' => true,
+            'can_edit_chats' => true,
             'can_delete_chats' => true,
         ]);
 
@@ -54,7 +60,7 @@ class MaxChatResourceTest extends TestCase
     {
         $chat = $this->makeChat(3001, title: 'Релизы');
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class)
+        Livewire::test(ListMaxChats::class)
             ->assertSuccessful()
             ->assertCanSeeTableRecords([$chat])
             ->assertTableColumnStateSet('displayName', 'Релизы', $chat);
@@ -62,11 +68,11 @@ class MaxChatResourceTest extends TestCase
 
     public function test_list_shows_columns_in_expected_default_order(): void
     {
-        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class);
+        $component = Livewire::test(ListMaxChats::class);
         $component->assertSuccessful();
 
         $instance = $component->instance();
-        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class, $instance);
+        self::assertInstanceOf(ListMaxChats::class, $instance);
 
         $columns = $instance->getTable()->getVisibleColumns();
 
@@ -78,11 +84,11 @@ class MaxChatResourceTest extends TestCase
 
     public function test_list_exposes_every_column_as_toggleable(): void
     {
-        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class);
+        $component = Livewire::test(ListMaxChats::class);
         $component->assertSuccessful();
 
         $instance = $component->instance();
-        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class, $instance);
+        self::assertInstanceOf(ListMaxChats::class, $instance);
 
         $columns = $instance->getTable()->getColumns();
 
@@ -108,7 +114,7 @@ class MaxChatResourceTest extends TestCase
             'user_id' => 2001,
         ]);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class)
+        Livewire::test(ListMaxChats::class)
             ->assertSuccessful()
             ->assertTableColumnStateSet('displayName', 'ChatUser', $chat);
     }
@@ -121,7 +127,7 @@ class MaxChatResourceTest extends TestCase
         MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2001]);
         MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2002]);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class)
+        Livewire::test(ListMaxChats::class)
             ->assertSuccessful()
             ->assertTableColumnStateSet('chat_users_count', 2, $chat)
             ->assertTableColumnStateSet('chat_users_count', 0, $empty)
@@ -134,7 +140,7 @@ class MaxChatResourceTest extends TestCase
         $group = $this->makeChat(3004, chatType: ChatType::Chat);
         $channel = $this->makeChat(3005, chatType: ChatType::Channel);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats::class)
+        Livewire::test(ListMaxChats::class)
             ->assertSuccessful()
             ->filterTable('chat_type', ChatType::Channel->value)
             ->assertCanSeeTableRecords([$channel])
@@ -147,7 +153,7 @@ class MaxChatResourceTest extends TestCase
 
         MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2001]);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->assertSuccessful()
             ->assertSee('Релиз 1.2.0')
             ->assertSee('https://max.ru/chat/3006')
@@ -158,11 +164,11 @@ class MaxChatResourceTest extends TestCase
     {
         $chat = $this->makeChat(3013);
 
-        $component = Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id]);
+        $component = Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id]);
         $component->assertSuccessful();
 
         $instance = $component->instance();
-        self::assertInstanceOf(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, $instance);
+        self::assertInstanceOf(ViewMaxChat::class, $instance);
 
         $schema = $instance->getSchema('infolist');
         self::assertNotNull($schema);
@@ -190,7 +196,7 @@ class MaxChatResourceTest extends TestCase
 
         $chat = $this->makeChat(3007);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->assertSuccessful()
             ->assertActionHidden('refreshChat');
     }
@@ -206,7 +212,7 @@ class MaxChatResourceTest extends TestCase
             'icon' => ['url' => 'https://max.ru/icon.png'],
         ]));
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->callAction('refreshChat')
             ->assertNotified();
 
@@ -231,7 +237,7 @@ class MaxChatResourceTest extends TestCase
             'participants_count' => 2,
         ]));
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->callAction('refreshChat')
             ->assertNotified();
 
@@ -245,7 +251,7 @@ class MaxChatResourceTest extends TestCase
 
         $this->fakeMaxApi(new Response(404, [], '{"code":"chat.not.found","message":"not found"}'));
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->callAction('refreshChat')
             ->assertNotified();
 
@@ -258,12 +264,33 @@ class MaxChatResourceTest extends TestCase
 
         MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2001]);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->callAction('delete')
-            ->assertNotified();
+            ->assertNotified()
+            ->assertRedirect(MaxChatResource::getUrl('index'));
 
         $this->assertDatabaseMissing('max_chats', ['chat_id' => 3010]);
         $this->assertDatabaseMissing('max_chat_users', ['chat_id' => 3010]);
+    }
+
+    public function test_delete_action_rolls_back_when_host_application_references_chat(): void
+    {
+        $chat = $this->makeChat(3014);
+
+        MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2001]);
+
+        DB::table('host_chat_links')->insert([
+            'max_chat_id' => $chat->chat_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
+            ->callAction('delete')
+            ->assertNotified();
+
+        $this->assertDatabaseHas('max_chats', ['chat_id' => 3014]);
+        $this->assertDatabaseHas('max_chat_users', ['chat_id' => 3014]);
     }
 
     public function test_delete_action_is_hidden_without_permission(): void
@@ -272,22 +299,148 @@ class MaxChatResourceTest extends TestCase
 
         $chat = $this->makeChat(3011);
 
-        Livewire::test(\GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat::class, ['record' => $chat->chat_id])
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
             ->assertSuccessful()
             ->assertActionHidden('delete');
 
         $this->assertDatabaseHas('max_chats', ['chat_id' => 3011]);
     }
 
-    public function test_resource_is_read_only(): void
+    public function test_default_labels_follow_locale(): void
+    {
+        app()->setLocale('en');
+
+        self::assertSame('Max chat', MaxChatResource::getModelLabel());
+        self::assertSame('Max chats', MaxChatResource::getPluralModelLabel());
+        self::assertSame('Max chats', MaxChatResource::getNavigationLabel());
+
+        app()->setLocale('ru');
+
+        self::assertSame('Max чат', MaxChatResource::getModelLabel());
+        self::assertSame('Max чаты', MaxChatResource::getPluralModelLabel());
+        self::assertSame('Max чаты', MaxChatResource::getNavigationLabel());
+    }
+
+    public function test_resource_allows_editing_and_deletion_but_not_creation(): void
     {
         $record = $this->makeChat(3099);
 
         self::assertFalse(MaxChatResource::canCreate());
+        self::assertTrue(MaxChatResource::canEdit($record));
+        self::assertTrue(MaxChatResource::canDelete($record));
+        self::assertNotContains('create', array_keys(MaxChatResource::getPages()));
+        self::assertContains('edit', array_keys(MaxChatResource::getPages()));
+    }
+
+    public function test_editing_and_deletion_are_denied_without_permissions(): void
+    {
+        $this->user->update(['can_edit_chats' => false, 'can_delete_chats' => false]);
+
+        $record = $this->makeChat(3098);
+
         self::assertFalse(MaxChatResource::canEdit($record));
         self::assertFalse(MaxChatResource::canDelete($record));
-        self::assertNotContains('create', array_keys(MaxChatResource::getPages()));
-        self::assertNotContains('edit', array_keys(MaxChatResource::getPages()));
+
+        $this->get(MaxChatResource::getUrl('edit', ['record' => $record]))
+            ->assertForbidden();
+    }
+
+    public function test_edit_page_updates_chat_metadata(): void
+    {
+        $chat = $this->makeChat(3015);
+
+        Livewire::test(EditMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->fillForm([
+                'title' => 'Исправленное название',
+                'link' => 'https://max.ru/chat/fixed',
+                'icon_url' => 'https://max.ru/icon-fixed.png',
+                'description' => 'Исправленное описание',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified();
+
+        $fresh = $chat->fresh();
+
+        $this->assertNotNull($fresh);
+        $this->assertSame('Исправленное название', $fresh->title);
+        $this->assertSame('https://max.ru/chat/fixed', $fresh->link);
+        $this->assertSame('https://max.ru/icon-fixed.png', $fresh->icon_url);
+        $this->assertSame('Исправленное описание', $fresh->description);
+    }
+
+    public function test_edit_form_rejects_non_http_link(): void
+    {
+        $chat = $this->makeChat(3019);
+
+        Livewire::test(EditMaxChat::class, ['record' => $chat->chat_id])
+            ->fillForm([
+                'link' => 'javascript:alert(1)',
+                'icon_url' => 'javascript:alert(2)',
+            ])
+            ->call('save')
+            ->assertHasFormErrors(['link', 'icon_url']);
+
+        $this->assertNull($chat->fresh()?->link);
+        $this->assertNull($chat->fresh()?->icon_url);
+    }
+
+    public function test_edit_form_exposes_only_editable_fields(): void
+    {
+        $chat = $this->makeChat(3016);
+
+        $component = Livewire::test(EditMaxChat::class, ['record' => $chat->chat_id]);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(EditMaxChat::class, $instance);
+
+        $schema = $instance->getSchema('form');
+
+        self::assertNotNull($schema);
+
+        $names = [];
+
+        foreach ($schema->getComponents() as $field) {
+            if ($field instanceof Field) {
+                $names[] = $field->getName();
+            }
+        }
+
+        self::assertSame(['title', 'link', 'icon_url', 'description'], $names);
+    }
+
+    public function test_edit_and_delete_actions_are_visible_with_permissions(): void
+    {
+        $chat = $this->makeChat(3017);
+
+        Livewire::test(ListMaxChats::class)
+            ->assertSuccessful()
+            ->assertTableActionVisible('edit', $chat)
+            ->assertTableActionVisible('delete', $chat);
+
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->assertActionVisible('edit')
+            ->assertActionVisible('delete');
+    }
+
+    public function test_edit_and_delete_actions_are_hidden_without_permissions(): void
+    {
+        $this->user->update(['can_edit_chats' => false, 'can_delete_chats' => false]);
+
+        $chat = $this->makeChat(3018);
+
+        Livewire::test(ListMaxChats::class)
+            ->assertSuccessful()
+            ->assertTableActionHidden('edit', $chat)
+            ->assertTableActionHidden('delete', $chat);
+
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->assertActionHidden('edit')
+            ->assertActionHidden('delete');
     }
 
     private function makeChat(

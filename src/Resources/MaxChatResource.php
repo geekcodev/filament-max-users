@@ -9,18 +9,22 @@ use Filament\Panel;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use GeekCo\FilamentMaxUsers\Resources\Pages\EditMaxChat;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxChat;
+use GeekCo\FilamentMaxUsers\Resources\Schemas\MaxChatForm;
 use GeekCo\FilamentMaxUsers\Resources\Tables\MaxChatsTable;
+use GeekCo\LaravelMaxClient\Models\MaxChat;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class MaxChatResource extends Resource
 {
     public static function getModel(): string
     {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> */
-        return config('filament-max-users.chats_model', \GeekCo\LaravelMaxClient\Models\MaxChat::class);
+        /** @var class-string<Model> */
+        return config()->string('laravel-max-client.chats.model', MaxChat::class);
     }
 
     public static function getModelLabel(): string
@@ -81,7 +85,7 @@ class MaxChatResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema;
+        return MaxChatForm::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -94,6 +98,7 @@ class MaxChatResource extends Resource
         return [
             'index' => ListMaxChats::route('/'),
             'view' => ViewMaxChat::route('/{record}'),
+            'edit' => EditMaxChat::route('/{record}/edit'),
         ];
     }
 
@@ -104,25 +109,21 @@ class MaxChatResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return false;
+        return Gate::allows('edit', $record);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return false;
+        return Gate::allows('delete', $record);
     }
 
     public static function canAccess(): bool
     {
-        $permission = config()->string('filament-max-users.permissions.chats.view', 'chats.view');
-
-        $user = auth()->user();
-
-        return $user !== null && $user->can($permission);
+        return Gate::allows('viewAny', static::getModel());
     }
 
     public static function canView(Model $record): bool
     {
-        return static::canAccess();
+        return Gate::allows('view', $record);
     }
 }
