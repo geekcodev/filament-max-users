@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Resources\Tables;
 
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxChatAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxChatAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
@@ -113,8 +115,15 @@ class MaxChatsTable
                         MaxChatStatus::Removed->value => MaxChatStatus::Removed->label(),
                     ]),
             ])
-            ->recordUrl(static fn (Model $record): string => MaxChatResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(static fn (Model $record): ?string => Gate::allows('view', $record)
+                ? MaxChatResource::getUrl('view', ['record' => $record])
+                : null)
             ->recordActions([
+                RefreshMaxChatAction::make()
+                    ->iconButton(),
+                ViewAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('view', $record))
+                    ->iconButton(),
                 EditAction::make()
                     ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))
                     ->iconButton(),

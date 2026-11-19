@@ -119,6 +119,8 @@ src/
     (Pages/ListMaxUsers, ViewMaxUser, EditMaxUser, ListMaxChats, ViewMaxChat, EditMaxChat)
     Actions/DeleteMaxUserAction.php    удаление пользователя вместе со связями max_chat_users
     Actions/DeleteMaxChatAction.php    удаление чата вместе со связями max_chat_users
+    Actions/RefreshMaxUserAction.php   «Обновить из MAX» для строки/страницы пользователя
+    Actions/RefreshMaxChatAction.php   «Обновить из MAX» для строки/страницы чата
     Schemas/MaxUserForm.php            форма редактирования профиля и контактов
     Schemas/MaxChatForm.php            форма редактирования метаданных чата
     (Tables/... по образцу filament-max-broadcasts)
@@ -215,10 +217,12 @@ phpstan-baseline.neon                 только test-only записи для
   вебхуками. Проверки идут через Gate (`Gate::allows('edit', $record)`) и fail-closed; без права раздел недоступен,
   действие скрыто и отклоняется на сервере.
 - **Обновление профиля пользователя**: действие «Обновить из MAX» вызывает
-  `GeekCo\LaravelMaxClient\Services\MaxUserProfileService::refresh($user_id)` (источник — `getChatMembers`).
+  `GeekCo\LaravelMaxClient\Services\MaxUserProfileService::refresh($user_id)` (источник — `getChatMembers`). Общее
+  действие `Resources\Actions\RefreshMaxUserAction` используется и в списке, и на странице просмотра.
 - **Обновление метаданных чата**: действие «Обновить из MAX» вызывает
   `GeekCo\LaravelMaxClient\Services\MaxChatProfileService::sync($chat_id)` (источник — `getChat`), а не `refresh()`:
-  администратор открыл конкретный чат, а `refresh()` пропускает чаты со свежим `chat_checked_at`.
+  администратор открыл конкретный чат, а `refresh()` пропускает чаты со свежим `chat_checked_at`. Общее действие
+  `Resources\Actions\RefreshMaxChatAction` используется и в списке, и на странице просмотра.
 - **Счётчики связей**: Filament `counts()` в v5 принимает **имя связи**, а не имя колонки: `counts('chatUsers')` у чата
   и
   `counts('chatLinks')` у пользователя. Laravel считает по snake_case-атрибуту `withCount`, поэтому переименование связи

@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxChatAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxChatAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
-use GeekCo\LaravelMaxClient\Models\MaxChat;
-use GeekCo\LaravelMaxClient\Services\MaxChatProfileService;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -110,48 +107,8 @@ class ViewMaxChat extends ViewRecord
         return [
             EditAction::make()
                 ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
-            $this->refreshMetadataAction(),
+            RefreshMaxChatAction::make(),
             DeleteMaxChatAction::make(),
         ];
-    }
-
-    /**
-     * Забрать метаданные чата из MAX: название, описание, ссылку и иконку.
-     *
-     * Один вызов sync(), а не refresh(): администратор нажал на конкретный чат,
-     * а refresh() пропускает чаты с свежей отметкой chat_checked_at.
-     */
-    private function refreshMetadataAction(): Action
-    {
-        return Action::make('refreshChat')
-            ->label(__('filament-max-users::chats.actions.refresh'))
-            ->icon('heroicon-o-arrow-path')
-            ->color('success')
-            ->outlined()
-            ->requiresConfirmation()
-            ->modalHeading(__('filament-max-users::chats.actions.refresh_heading'))
-            ->modalDescription(__('filament-max-users::chats.actions.refresh_description'))
-            ->modalSubmitActionLabel(__('filament-max-users::chats.actions.refresh_submit'))
-            ->authorize(static fn (Model $record): bool => Gate::allows('manage', $record))
-            ->action(function (): void {
-                /** @var MaxChat $record */
-                $record = $this->getRecord();
-
-                $updated = app(MaxChatProfileService::class)->sync($record->chat_id);
-
-                if ($updated) {
-                    $record->refresh();
-
-                    Notification::make()
-                        ->title(__('filament-max-users::chats.actions.refresh_success'))
-                        ->success()
-                        ->send();
-                } else {
-                    Notification::make()
-                        ->title(__('filament-max-users::chats.actions.refresh_failure'))
-                        ->danger()
-                        ->send();
-                }
-            });
     }
 }

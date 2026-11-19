@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Resources\Tables;
 
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxUserAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
 use Illuminate\Database\Eloquent\Builder;
@@ -120,8 +122,15 @@ class MaxUsersTable
                     ->label(__('filament-max-users::users.table.filter_has_phone'))
                     ->query(static fn (Builder $query): Builder => $query->whereNotNull('phone')->where('phone', '!=', '')),
             ])
-            ->recordUrl(static fn (Model $record): string => MaxUserResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(static fn (Model $record): ?string => Gate::allows('view', $record)
+                ? MaxUserResource::getUrl('view', ['record' => $record])
+                : null)
             ->recordActions([
+                RefreshMaxUserAction::make()
+                    ->iconButton(),
+                ViewAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('view', $record))
+                    ->iconButton(),
                 EditAction::make()
                     ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))
                     ->iconButton(),

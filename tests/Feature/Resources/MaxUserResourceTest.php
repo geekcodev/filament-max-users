@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 
+use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Infolists\Components\Entry;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
@@ -13,11 +14,13 @@ use GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxUser;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\TestUser;
 use GeekCo\FilamentMaxUsers\Tests\TestCase;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
+use GeekCo\LaravelMaxClient\Enums\MaxUserPermission;
 use GeekCo\LaravelMaxClient\Models\MaxChat;
 use GeekCo\LaravelMaxClient\Models\MaxChatUser;
 use GeekCo\LaravelMaxClient\Models\MaxUser;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 
 class MaxUserResourceTest extends TestCase
@@ -137,6 +140,44 @@ class MaxUserResourceTest extends TestCase
         );
     }
 
+    public function test_list_row_actions_are_in_expected_order(): void
+    {
+        $component = Livewire::test(ListMaxUsers::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(ListMaxUsers::class, $instance);
+
+        $names = [];
+
+        foreach ($instance->getTable()->getRecordActions() as $action) {
+            if ($action instanceof Action) {
+                $names[] = (string) $action->getName();
+            }
+        }
+
+        self::assertSame(['refresh', 'view', 'edit', 'delete'], $names);
+    }
+
+    public function test_list_row_has_no_view_url_without_view_permission(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1024,
+            'first_name' => 'NoView',
+            'is_bot' => false,
+        ]);
+
+        Gate::define(MaxUserPermission::View->value, static fn (): bool => false);
+
+        $component = Livewire::test(ListMaxUsers::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(ListMaxUsers::class, $instance);
+
+        self::assertNull($instance->getTable()->getRecordUrl($user));
+    }
+
     public function test_list_shows_columns_in_expected_default_order(): void
     {
         $component = Livewire::test(ListMaxUsers::class);
@@ -217,6 +258,28 @@ class MaxUserResourceTest extends TestCase
             ->filterTable('has_phone')
             ->assertCanSeeTableRecords([$withPhone])
             ->assertCanNotSeeTableRecords([$withoutPhone]);
+    }
+
+    public function test_list_refresh_action_updates_profile_from_max(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1023,
+            'first_name' => 'ListRefresh',
+            'is_bot' => false,
+        ]);
+
+        $this->linkUserToChat($user->user_id, 4020);
+
+        $http = $this->fakeMaxApi($this->chatMemberResponse($user->user_id, [
+            'first_name' => 'Обновлено из списка',
+        ]));
+
+        Livewire::test(ListMaxUsers::class)
+            ->callTableAction('refresh', $user)
+            ->assertNotified();
+
+        $this->assertSame('Обновлено из списка', $user->fresh()?->first_name);
+        $this->assertSame(1, $http->callCount);
     }
 
     public function test_view_page_displays_user(): void
@@ -475,6 +538,8 @@ class MaxUserResourceTest extends TestCase
 
         Livewire::test(ListMaxUsers::class)
             ->assertSuccessful()
+            ->assertTableActionVisible('refresh', $user)
+            ->assertTableActionVisible('view', $user)
             ->assertTableActionVisible('edit', $user)
             ->assertTableActionVisible('delete', $user);
 

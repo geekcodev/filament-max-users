@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxUserAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
-use GeekCo\LaravelMaxClient\Models\MaxUser;
-use GeekCo\LaravelMaxClient\Services\MaxUserProfileService;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -108,41 +105,7 @@ class ViewMaxUser extends ViewRecord
         return [
             EditAction::make()
                 ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
-            Action::make('refresh')
-                ->label(__('filament-max-users::users.actions.refresh'))
-                ->icon('heroicon-o-arrow-path')
-                ->color('success')
-                ->outlined()
-                ->requiresConfirmation()
-                ->modalHeading(__('filament-max-users::users.actions.refresh_heading'))
-                ->modalDescription(__('filament-max-users::users.actions.refresh_description'))
-                ->modalSubmitActionLabel(__('filament-max-users::users.actions.refresh_submit'))
-                ->authorize(static fn (Model $record): bool => Gate::allows('manage', $record))
-                ->action(function (): void {
-                    /** @var MaxUser $record */
-                    $record = $this->getRecord();
-
-                    $updated = app(MaxUserProfileService::class)->refresh($record->user_id);
-
-                    if ($updated) {
-                        $this->refreshFormData([
-                            'first_name', 'last_name', 'username', 'is_bot',
-                            'last_activity_time', 'name', 'description',
-                            'avatar_url', 'full_avatar_url', 'phone', 'email',
-                            'profile_checked_at',
-                        ]);
-
-                        Notification::make()
-                            ->title(__('filament-max-users::users.actions.refresh_success'))
-                            ->success()
-                            ->send();
-                    } else {
-                        Notification::make()
-                            ->title(__('filament-max-users::users.actions.refresh_failure'))
-                            ->danger()
-                            ->send();
-                    }
-                }),
+            RefreshMaxUserAction::make(),
             DeleteMaxUserAction::make(),
         ];
     }

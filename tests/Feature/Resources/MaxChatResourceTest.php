@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 
+use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Infolists\Components\Entry;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
@@ -64,6 +65,25 @@ class MaxChatResourceTest extends TestCase
             ->assertSuccessful()
             ->assertCanSeeTableRecords([$chat])
             ->assertTableColumnStateSet('displayName', 'Релизы', $chat);
+    }
+
+    public function test_list_row_actions_are_in_expected_order(): void
+    {
+        $component = Livewire::test(ListMaxChats::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(ListMaxChats::class, $instance);
+
+        $names = [];
+
+        foreach ($instance->getTable()->getRecordActions() as $action) {
+            if ($action instanceof Action) {
+                $names[] = (string) $action->getName();
+            }
+        }
+
+        self::assertSame(['refreshChat', 'view', 'edit', 'delete'], $names);
     }
 
     public function test_list_row_opens_view_page(): void
@@ -161,6 +181,22 @@ class MaxChatResourceTest extends TestCase
             ->filterTable('chat_type', ChatType::Channel->value)
             ->assertCanSeeTableRecords([$channel])
             ->assertCanNotSeeTableRecords([$group]);
+    }
+
+    public function test_list_refresh_action_updates_metadata_from_max(): void
+    {
+        $chat = $this->makeChat(3023);
+
+        $http = $this->fakeMaxApi($this->chatResponse(3023, 'chat', [
+            'title' => 'Обновлено из списка',
+        ]));
+
+        Livewire::test(ListMaxChats::class)
+            ->callTableAction('refreshChat', $chat)
+            ->assertNotified();
+
+        $this->assertSame('Обновлено из списка', $chat->fresh()?->title);
+        $this->assertSame(1, $http->callCount);
     }
 
     public function test_view_page_displays_chat_metadata(): void
@@ -470,6 +506,8 @@ class MaxChatResourceTest extends TestCase
 
         Livewire::test(ListMaxChats::class)
             ->assertSuccessful()
+            ->assertTableActionVisible('refreshChat', $chat)
+            ->assertTableActionVisible('view', $chat)
             ->assertTableActionVisible('edit', $chat)
             ->assertTableActionVisible('delete', $chat);
 
