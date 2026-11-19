@@ -27,6 +27,7 @@ final class DeleteMaxUserAction
     {
         return DeleteAction::make('delete')
             ->label(__('filament-max-users::users.actions.delete'))
+            ->icon('heroicon-o-trash')
             ->modalHeading(__('filament-max-users::users.actions.delete_heading'))
             ->modalDescription(__('filament-max-users::users.actions.delete_description'))
             ->modalSubmitActionLabel(__('filament-max-users::users.actions.delete_submit'))

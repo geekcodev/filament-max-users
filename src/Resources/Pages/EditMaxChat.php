@@ -33,6 +33,20 @@ class EditMaxChat extends EditRecord
         return MaxChatResource::getUrl('index');
     }
 
+    protected function getSaveFormAction(): Action
+    {
+        return parent::getSaveFormAction()
+            ->icon('heroicon-o-check')
+            ->outlined();
+    }
+
+    protected function getCancelFormAction(): Action
+    {
+        return parent::getCancelFormAction()
+            ->icon('heroicon-o-x-mark')
+            ->outlined();
+    }
+
     /**
      * У диалога нет own-метаданных для формы: сохранять нечего, оставляем
      * только контекст и действия в шапке.
@@ -46,7 +60,8 @@ class EditMaxChat extends EditRecord
     {
         return [
             $this->openUserAction(),
-            DeleteMaxChatAction::make(),
+            DeleteMaxChatAction::make()
+                ->outlined(),
         ];
     }
 
@@ -59,6 +74,7 @@ class EditMaxChat extends EditRecord
         return Action::make('openUser')
             ->label(__('filament-max-users::chats.actions.open_user'))
             ->icon('heroicon-o-user')
+            ->outlined()
             ->visible(function (): bool {
                 $user = $this->dialogUser();
 

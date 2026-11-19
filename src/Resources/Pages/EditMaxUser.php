@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Resources\Pages;
 
+use Filament\Actions\Action;
 use Filament\Resources\Pages\EditRecord;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
@@ -25,6 +26,20 @@ class EditMaxUser extends EditRecord
     protected function getRedirectUrl(): string
     {
         return MaxUserResource::getUrl('index');
+    }
+
+    protected function getSaveFormAction(): Action
+    {
+        return parent::getSaveFormAction()
+            ->icon('heroicon-o-check')
+            ->outlined();
+    }
+
+    protected function getCancelFormAction(): Action
+    {
+        return parent::getCancelFormAction()
+            ->icon('heroicon-o-x-mark')
+            ->outlined();
     }
 
     /**
@@ -54,7 +69,8 @@ class EditMaxUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteMaxUserAction::make(),
+            DeleteMaxUserAction::make()
+                ->outlined(),
         ];
     }
 }

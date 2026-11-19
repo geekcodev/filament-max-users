@@ -103,10 +103,13 @@ class ViewMaxUser extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make()
-                ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
             RefreshMaxUserAction::make(),
-            DeleteMaxUserAction::make(),
+            EditAction::make()
+                ->icon('heroicon-o-pencil-square')
+                ->outlined()
+                ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record)),
+            DeleteMaxUserAction::make()
+                ->outlined(),
         ];
     }
 }
