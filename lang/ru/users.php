@@ -11,7 +11,7 @@ return [
     ],
 
     'table' => [
-        'user_id'           => 'ID',
+        'user_id'           => 'ID пользователя',
         'first_name'        => 'Имя',
         'last_name'         => 'Фамилия',
         'username'          => 'Никнейм',
@@ -26,8 +26,8 @@ return [
         'name'              => 'Отображаемое имя',
         'description'       => 'Описание',
         'phone_verified_at' => 'Телефон подтверждён',
-        'profile_checked_at' => 'Обновлён',
-        'filter_is_bot'     => 'Тип',
+        'profile_checked_at' => 'Профиль обновлён',
+        'filter_is_bot'     => 'Тип пользователя',
         'filter_is_bot_user' => 'Пользователь',
         'filter_is_bot_bot'  => 'Бот',
         'filter_has_phone'  => 'С телефоном',
@@ -42,6 +42,8 @@ return [
         'phone'       => 'Телефон',
         'email'       => 'Email',
         'is_bot'      => 'Является ботом',
+        'reset_phone_verification' => 'Сбросить подтверждение телефона',
+        'reset_phone_verification_hint' => 'Номер останется, но отметка подтверждения будет удалена. При изменении номера отметка сбрасывается автоматически.',
     ],
 
     'pages' => [
@@ -66,7 +68,7 @@ return [
         'never_checked'      => 'ещё не синхронизирован',
         'chats'              => 'Чаты',
         'chat_name'          => 'Название',
-        'chat_id'            => 'Chat ID',
+        'chat_id'            => 'ID чата',
         'chat_type'          => 'Тип чата',
         'chat_last_activity_at' => 'Последняя активность',
     ],

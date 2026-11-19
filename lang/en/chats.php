@@ -43,6 +43,8 @@ return [
         'description' => 'Description',
         'link'        => 'Link',
         'icon_url'    => 'Icon',
+        'dialog_context' => 'Dialog with user',
+        'dialog_notice' => 'A dialog has no chat metadata (title, description, link, icon): MAX does not provide it. The name comes from the user profile — open the user to change it.',
     ],
 
     'pages' => [
@@ -81,6 +83,7 @@ return [
         'delete_success'  => 'Chat record deleted',
         'delete_failure'  => 'The chat record could not be deleted: the record is referenced by the application.',
         'edit_success'    => 'Chat metadata has been saved',
+        'open_user'       => 'Open user',
     ],
 
 ];

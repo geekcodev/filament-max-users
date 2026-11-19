@@ -11,6 +11,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -119,6 +120,7 @@ class MaxUsersTable
                     ->label(__('filament-max-users::users.table.filter_has_phone'))
                     ->query(static fn (Builder $query): Builder => $query->whereNotNull('phone')->where('phone', '!=', '')),
             ])
+            ->recordUrl(static fn (Model $record): string => MaxUserResource::getUrl('view', ['record' => $record]))
             ->recordActions([
                 EditAction::make()
                     ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))

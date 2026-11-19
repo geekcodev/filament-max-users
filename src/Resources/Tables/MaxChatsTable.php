@@ -10,6 +10,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxChatAction;
+use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
 use GeekCo\MaxPhpClient\Enum\ChatType;
@@ -112,6 +113,7 @@ class MaxChatsTable
                         MaxChatStatus::Removed->value => MaxChatStatus::Removed->label(),
                     ]),
             ])
+            ->recordUrl(static fn (Model $record): string => MaxChatResource::getUrl('view', ['record' => $record]))
             ->recordActions([
                 EditAction::make()
                     ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))

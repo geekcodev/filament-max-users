@@ -22,6 +22,35 @@ class EditMaxUser extends EditRecord
         return __('filament-max-users::users.actions.edit_success');
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return MaxUserResource::getUrl('index');
+    }
+
+    /**
+     * Сброс отметки телефона: явный переключатель или изменение номера.
+     * Служебное поле phone_verified_at в форме напрямую не редактируется,
+     * но сохранение должно снимать устаревшее подтверждение.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $record = $this->getRecord();
+        $phoneChanged = \array_key_exists('phone', $data)
+            && $data['phone'] !== $record->getAttribute('phone');
+
+        if (($data['reset_phone_verification'] ?? false) || $phoneChanged) {
+            $data['phone_verified_at'] = null;
+        }
+
+        unset($data['reset_phone_verification']);
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -66,6 +66,22 @@ class MaxChatResourceTest extends TestCase
             ->assertTableColumnStateSet('displayName', 'Релизы', $chat);
     }
 
+    public function test_list_row_opens_view_page(): void
+    {
+        $chat = $this->makeChat(3020);
+
+        $component = Livewire::test(ListMaxChats::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(ListMaxChats::class, $instance);
+
+        self::assertSame(
+            MaxChatResource::getUrl('view', ['record' => $chat]),
+            $instance->getTable()->getRecordUrl($chat),
+        );
+    }
+
     public function test_list_shows_columns_in_expected_default_order(): void
     {
         $component = Livewire::test(ListMaxChats::class);
@@ -359,7 +375,8 @@ class MaxChatResourceTest extends TestCase
             ])
             ->call('save')
             ->assertHasNoFormErrors()
-            ->assertNotified();
+            ->assertNotified()
+            ->assertRedirect(MaxChatResource::getUrl('index'));
 
         $fresh = $chat->fresh();
 
@@ -409,6 +426,42 @@ class MaxChatResourceTest extends TestCase
         }
 
         self::assertSame(['title', 'link', 'icon_url', 'description'], $names);
+    }
+
+    public function test_edit_dialog_shows_context_and_hides_metadata_fields(): void
+    {
+        $chat = $this->makeChat(3021, chatType: ChatType::Dialog);
+
+        MaxChatUser::create(['chat_id' => $chat->chat_id, 'user_id' => 2001]);
+
+        $this->user->update(['can_view_users' => true, 'can_edit_users' => true]);
+
+        Livewire::test(EditMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->assertFormFieldExists('chat_id')
+            ->assertFormFieldExists('chat_type')
+            ->assertFormFieldExists('status')
+            ->assertFormFieldExists('display_name')
+            ->assertFormFieldDoesNotExist('title')
+            ->assertFormFieldDoesNotExist('link')
+            ->assertFormFieldDoesNotExist('icon_url')
+            ->assertFormFieldDoesNotExist('description')
+            ->assertActionVisible('openUser')
+            ->assertActionDoesNotExist('save');
+    }
+
+    public function test_edit_group_does_not_show_dialog_context(): void
+    {
+        $chat = $this->makeChat(3022, chatType: ChatType::Chat, title: 'Группа');
+
+        Livewire::test(EditMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->assertFormFieldExists('title')
+            ->assertFormFieldExists('link')
+            ->assertFormFieldExists('icon_url')
+            ->assertFormFieldExists('description')
+            ->assertFormFieldDoesNotExist('chat_id')
+            ->assertActionHidden('openUser');
     }
 
     public function test_edit_and_delete_actions_are_visible_with_permissions(): void

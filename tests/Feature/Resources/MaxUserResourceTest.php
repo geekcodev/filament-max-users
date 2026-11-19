@@ -117,6 +117,26 @@ class MaxUserResourceTest extends TestCase
             ->assertCanSeeTableRecords(MaxUser::all());
     }
 
+    public function test_list_row_opens_view_page(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1022,
+            'first_name' => 'RowLink',
+            'is_bot' => false,
+        ]);
+
+        $component = Livewire::test(ListMaxUsers::class);
+        $component->assertSuccessful();
+
+        $instance = $component->instance();
+        self::assertInstanceOf(ListMaxUsers::class, $instance);
+
+        self::assertSame(
+            MaxUserResource::getUrl('view', ['record' => $user]),
+            $instance->getTable()->getRecordUrl($user),
+        );
+    }
+
     public function test_list_shows_columns_in_expected_default_order(): void
     {
         $component = Livewire::test(ListMaxUsers::class);
@@ -347,7 +367,8 @@ class MaxUserResourceTest extends TestCase
             ])
             ->call('save')
             ->assertHasNoFormErrors()
-            ->assertNotified();
+            ->assertNotified()
+            ->assertRedirect(MaxUserResource::getUrl('index'));
 
         $fresh = $user->fresh();
 
@@ -367,6 +388,7 @@ class MaxUserResourceTest extends TestCase
         $user = MaxUser::create([
             'user_id' => 1012,
             'first_name' => 'Fields',
+            'phone_verified_at' => now(),
             'is_bot' => false,
         ]);
 
@@ -389,9 +411,58 @@ class MaxUserResourceTest extends TestCase
         }
 
         self::assertSame(
-            ['first_name', 'last_name', 'username', 'name', 'description', 'phone', 'email', 'is_bot'],
+            [
+                'first_name', 'last_name', 'username', 'name', 'description', 'phone',
+                'reset_phone_verification', 'email', 'is_bot',
+            ],
             $names,
         );
+    }
+
+    public function test_edit_page_can_reset_phone_verification(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1020,
+            'first_name' => 'Verified',
+            'phone' => '+79990000001',
+            'phone_verified_at' => now(),
+            'is_bot' => false,
+        ]);
+
+        Livewire::test(EditMaxUser::class, ['record' => $user->user_id])
+            ->assertSuccessful()
+            ->fillForm(['reset_phone_verification' => true])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $fresh = $user->fresh();
+
+        $this->assertNotNull($fresh);
+        $this->assertNull($fresh->phone_verified_at);
+        $this->assertSame('+79990000001', $fresh->phone);
+    }
+
+    public function test_edit_page_resets_verification_when_phone_changes(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1021,
+            'first_name' => 'ChangedPhone',
+            'phone' => '+79990000001',
+            'phone_verified_at' => now(),
+            'is_bot' => false,
+        ]);
+
+        Livewire::test(EditMaxUser::class, ['record' => $user->user_id])
+            ->assertSuccessful()
+            ->fillForm(['phone' => '+79990000002'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $fresh = $user->fresh();
+
+        $this->assertNotNull($fresh);
+        $this->assertSame('+79990000002', $fresh->phone);
+        $this->assertNull($fresh->phone_verified_at);
     }
 
     public function test_edit_and_delete_actions_are_visible_with_permissions(): void

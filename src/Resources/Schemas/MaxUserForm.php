@@ -8,6 +8,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 
 class MaxUserForm
 {
@@ -36,6 +37,10 @@ class MaxUserForm
                     ->label(__('filament-max-users::users.form.phone'))
                     ->tel()
                     ->maxLength(32),
+                Toggle::make('reset_phone_verification')
+                    ->label(__('filament-max-users::users.form.reset_phone_verification'))
+                    ->helperText(__('filament-max-users::users.form.reset_phone_verification_hint'))
+                    ->visible(static fn (Model $record): bool => $record->getAttribute('phone_verified_at') !== null),
                 TextInput::make('email')
                     ->label(__('filament-max-users::users.form.email'))
                     ->email()

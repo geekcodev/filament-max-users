@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Support;
 
 use GeekCo\LaravelMaxClient\Models\MaxChat;
+use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -43,6 +44,17 @@ final class ChatPresenter
         $fallback = __('laravel-max-client::chat.fallback', ['id' => $key]);
 
         return \is_string($fallback) ? $fallback : 'chat '.$key;
+    }
+
+    /**
+     * Диалог в MAX не имеет own-метаданных: название берётся из профиля
+     * собеседника. Атрибут может быть enum или строкой у переопределённой модели.
+     */
+    public static function isDialog(Model $record): bool
+    {
+        $type = $record->getAttribute('chat_type');
+
+        return $type === ChatType::Dialog || $type === ChatType::Dialog->value;
     }
 
     /**

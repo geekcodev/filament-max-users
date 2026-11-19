@@ -42,6 +42,8 @@ return [
         'phone'       => 'Phone',
         'email'       => 'Email',
         'is_bot'      => 'Is bot',
+        'reset_phone_verification' => 'Reset phone verification',
+        'reset_phone_verification_hint' => 'The number stays, but the verification mark is removed. Changing the number resets verification automatically.',
     ],
 
     'pages' => [

@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Schema;
 use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
@@ -74,7 +75,8 @@ class ViewMaxUser extends ViewRecord
                     ->schema([
                         TextEntry::make('displayName')
                             ->label(__('filament-max-users::users.view.chat_name'))
-                            ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record)),
+                            ->getStateUsing(static fn (Model $record): string => ChatPresenter::displayName($record))
+                            ->url(static fn (Model $record): string => MaxChatResource::getUrl('view', ['record' => $record])),
                         TextEntry::make('chat_id')
                             ->label(__('filament-max-users::users.view.chat_id')),
                         TextEntry::make('chat_type')
