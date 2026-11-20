@@ -65,9 +65,10 @@ Policy, `ResourceGate`, секции прав и ключей `users_model` / `c
   `RefreshMaxUserAction`/`RefreshMaxChatAction`. Клик по строке ведёт на просмотр только при праве `view`.
 - Кнопки просмотра упорядочены refresh → edit → delete и оформлены outlined с иконками; на редактировании тот же стиль у
   delete, «Открыть пользователя», Save и Cancel.
+- Удалён неиспользуемый `ChatPresenter::hasMetadata()` (был только в тестах).
 - Диалог: форма редактирования показывает read-only контекст (ID, тип, статус, имя собеседника), metadata-поля и
   сохранение скрыты; в шапке — «Открыть пользователя».
 
 ## Gate
 
-Lint 0/33, PHPStan level max 0, PHPUnit 84/84 (405 assertions), покрытие 97.86% строк (731/747), `composer audit` 0.
+Lint 0/33, PHPStan level max 0, PHPUnit 84/84 (399 assertions), покрытие 97.85% строк (727/743), `composer audit` 0.

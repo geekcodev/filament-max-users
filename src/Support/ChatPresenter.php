@@ -78,18 +78,4 @@ final class ChatPresenter
 
         return \in_array(\strtolower($scheme), ['http', 'https'], true) ? $trimmed : null;
     }
-
-    /**
-     * Есть ли у записи метаданные, полученные через getChat.
-     */
-    public static function hasMetadata(Model $record): bool
-    {
-        if ($record instanceof MaxChat) {
-            return $record->title !== null && $record->title !== '';
-        }
-
-        $title = $record->getAttribute('title');
-
-        return \is_string($title) && $title !== '';
-    }
 }

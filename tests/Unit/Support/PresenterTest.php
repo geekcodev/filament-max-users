@@ -24,7 +24,6 @@ class PresenterTest extends TestCase
         $chat = $this->makeChat(10, ChatType::Chat, 'Проектный чат');
 
         $this->assertSame('Проектный чат', ChatPresenter::displayName($chat));
-        $this->assertTrue(ChatPresenter::hasMetadata($chat));
     }
 
     public function testDialogFallsBackToLinkedUserName(): void
@@ -56,7 +55,6 @@ class PresenterTest extends TestCase
         MaxChatUser::create(['chat_id' => 13, 'user_id' => 21]);
 
         $this->assertSame('Автор', ChatPresenter::displayName($chat));
-        $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
     public function testUnknownChatFallsBackToIdentifier(): void
@@ -68,7 +66,6 @@ class PresenterTest extends TestCase
         app()->setLocale('ru');
 
         $this->assertSame('чат 12', ChatPresenter::displayName($chat));
-        $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
     public function testOverriddenChatModelUsesTitleAttribute(): void
@@ -77,7 +74,6 @@ class PresenterTest extends TestCase
         $chat->setAttribute('title', 'Рекламный канал');
 
         $this->assertSame('Рекламный канал', ChatPresenter::displayName($chat));
-        $this->assertTrue(ChatPresenter::hasMetadata($chat));
     }
 
     public function testOverriddenChatModelWithoutTitleUsesIdentifier(): void
@@ -89,7 +85,6 @@ class PresenterTest extends TestCase
         app()->setLocale('ru');
 
         $this->assertSame('чат 32', ChatPresenter::displayName($chat));
-        $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
     public function testRecordWithoutIdentifierAndTitleFallsBackToGenericName(): void
@@ -101,7 +96,6 @@ class PresenterTest extends TestCase
         app()->setLocale('ru');
 
         $this->assertSame('чат', ChatPresenter::displayName($chat));
-        $this->assertFalse(ChatPresenter::hasMetadata($chat));
     }
 
     /**
