@@ -34,6 +34,8 @@ return [
     ],
 
     'form' => [
+        'context'     => 'Служебные данные',
+        'profile'     => 'Профиль и контакты',
         'first_name'  => 'Имя',
         'last_name'   => 'Фамилия',
         'username'    => 'Никнейм',

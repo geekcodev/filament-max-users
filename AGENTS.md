@@ -34,8 +34,8 @@
 `composer.json`, реально установленная — `composer show geekcodev/laravel-max-client` (и `geekcodev/max-php-client`),
 релизные теги — `git tag --sort=-v:refname` в этом репозитории и в соседнем `../laravel-max-client`.
 
-Целевые constraints: `laravel-max-client ^2.0` и `max-php-client ^2.0`; пока теги `v2.0.0` не выпущены, ветка `new`
-ставит обе зависимости как `dev-new` из Packagist. `^1.2.0` обязателен не по привычке: начиная с этой версии реестр
+Целевые constraints: `laravel-max-client ^2.0` и `max-php-client ^2.0`: ядро и адаптер выпущены тегом `v2.0.0`, поэтому
+`dev-new` из ветки `new` больше не используется. `^1.2.0` обязателен не по привычке: начиная с этой версии реестр
 перешёл на **новую форму** — одна строка на чат, PK `chat_id`, связи вынесены в `max_chat_users`. На
 `1.1.x` модели `MaxChat`/`MaxChatUser` не имеют `title`, `chat_type`, `chat_checked_at`, `status`, поэтому ресурсы
 разваливаются (AttributeError на отсутствующих колонках) — понижать constraint нельзя.
@@ -245,7 +245,9 @@ phpstan-baseline.neon                 только test-only записи для
   откатывает транзакцию, действие показывает неудачу, а логирование идёт без PII. Удаление пользователя в самом MAX —
   **не** выполняем.
 - **Редактирование пользователя**: отдельная страница `EditMaxUser` и форма `Resources\Schemas\MaxUserForm` по политике
-  `edit` (`max_user.edit`). Редактируются только профиль и контакты (`first_name`, `last_name`, `username`, `name`,
+  `edit` (`max_user.edit`). Форма разбита на две секции-карточки: «Служебные данные» (ID, аватар, подтверждение
+  телефона, последняя активность, отметка синхронизации — только чтение) и «Профиль и контакты». Редактируются только
+  профиль и контакты (`first_name`, `last_name`, `username`, `name`,
   `description`, `phone`, `email`, `is_bot`); служебные поля (`user_id`, аватары, `last_activity_time`,
   `phone_verified_at`, `profile_checked_at`) доступны только для чтения — `phone_verified_at` заполняет бридж при
   подписанном контакте, остальные отметки — синхронизация. Для `phone_verified_at` есть переключатель «Сбросить

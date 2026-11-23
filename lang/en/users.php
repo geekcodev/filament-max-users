@@ -34,6 +34,8 @@ return [
     ],
 
     'form' => [
+        'context'     => 'Service data',
+        'profile'     => 'Profile and contacts',
         'first_name'  => 'First name',
         'last_name'   => 'Last name',
         'username'    => 'Username',

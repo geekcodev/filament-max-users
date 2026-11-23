@@ -7,6 +7,7 @@ namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Infolists\Components\Entry;
+use Filament\Schemas\Components\Section;
 use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Resources\Pages\EditMaxUser;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers;
@@ -467,19 +468,51 @@ class MaxUserResourceTest extends TestCase
 
         $names = [];
 
-        foreach ($schema->getComponents() as $field) {
-            if ($field instanceof Field) {
-                $names[] = $field->getName();
+        foreach ($schema->getComponents() as $component) {
+            $components = $component instanceof Section
+                ? $component->getChildComponents()
+                : [$component];
+
+            foreach ($components as $field) {
+                if ($field instanceof Field) {
+                    $names[] = $field->getName();
+                }
             }
         }
 
         self::assertSame(
             [
+                'user_id', 'phone_verified_at', 'last_activity_time', 'profile_checked_at',
                 'first_name', 'last_name', 'username', 'name', 'description', 'phone',
                 'reset_phone_verification', 'email', 'is_bot',
             ],
             $names,
         );
+    }
+
+    public function test_edit_page_shows_read_only_service_data(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1013,
+            'first_name' => 'Service',
+            'last_name' => 'Data',
+            'avatar_url' => 'https://max.ru/avatar/service.png',
+            'phone_verified_at' => now(),
+            'last_activity_time' => 1_700_000_000_000,
+            'profile_checked_at' => now(),
+            'is_bot' => false,
+        ]);
+
+        Livewire::test(EditMaxUser::class, ['record' => $user->user_id])
+            ->assertSuccessful()
+            ->assertSee(__('filament-max-users::users.form.context'))
+            ->assertSee(__('filament-max-users::users.form.profile'))
+            ->assertSee('https://max.ru/avatar/service.png')
+            ->assertFormFieldExists('user_id')
+            ->assertFormFieldDisabled('user_id')
+            ->assertFormFieldDisabled('phone_verified_at')
+            ->assertFormFieldDisabled('profile_checked_at')
+            ->assertFormFieldDisabled('last_activity_time');
     }
 
     public function test_edit_page_can_reset_phone_verification(): void
