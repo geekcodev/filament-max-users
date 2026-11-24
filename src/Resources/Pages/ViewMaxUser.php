@@ -81,6 +81,7 @@ class ViewMaxUser extends ViewRecord
                 Section::make(__('filament-max-users::users.view.chats'))
                     ->schema([
                         RepeatableEntry::make('maxChats')
+                            ->hiddenLabel()
                             ->schema([
                                 TextEntry::make('displayName')
                                     ->label(__('filament-max-users::users.view.chat_name'))

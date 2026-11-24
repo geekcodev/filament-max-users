@@ -317,6 +317,7 @@ class MaxUserResourceTest extends TestCase
         self::assertNotNull($schema);
 
         $names = [];
+        $entries = [];
 
         foreach ($schema->getComponents() as $component) {
             $components = $component instanceof Section
@@ -326,6 +327,7 @@ class MaxUserResourceTest extends TestCase
             foreach ($components as $entry) {
                 if ($entry instanceof Entry) {
                     $names[] = $entry->getName();
+                    $entries[$entry->getName()] = $entry;
                 }
             }
         }
@@ -338,6 +340,7 @@ class MaxUserResourceTest extends TestCase
             ],
             $names,
         );
+        self::assertTrue($entries['maxChats']->isLabelHidden());
     }
 
     public function test_view_page_groups_entries_into_sections(): void

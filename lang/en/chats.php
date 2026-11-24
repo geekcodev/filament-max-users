@@ -52,6 +52,8 @@ return [
     ],
 
     'view' => [
+        'context'            => 'Service data',
+        'about'              => 'About chat',
         'display_name'       => 'Name',
         'chat_id'            => 'Chat ID',
         'chat_type'          => 'Chat type',

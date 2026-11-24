@@ -52,6 +52,8 @@ return [
     ],
 
     'view' => [
+        'context'            => 'Служебные данные',
+        'about'              => 'О чате',
         'display_name'       => 'Название',
         'chat_id'            => 'ID чата',
         'chat_type'          => 'Тип чата',

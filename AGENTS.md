@@ -254,7 +254,10 @@ phpstan-baseline.neon                 только test-only записи для
   подтверждение телефона» (очищает отметку, номер остаётся); изменение номера сбрасывает подтверждение автоматически.
   После сохранения — редирект в список пользователей (`getRedirectUrl()`).
 - **Просмотр пользователя**: infolist разбит на три секции-карточки — «Служебные данные», «Профиль и контакты» и «Чаты»
-  (`users.view.context|profile|chats`); список чатов — `RepeatableEntry` по `maxChats` со ссылками на карточки чатов.
+  (`users.view.context|profile|chats`); список чатов — `RepeatableEntry` по `maxChats` со ссылками на карточки чатов,
+  подпись записи скрыта (заголовок даёт секция).
+- **Просмотр чата**: infolist разбит на три секции-карточки — «Служебные данные», «О чате» и «Участники»
+  (`chats.view.context|about|users`); участники — `RepeatableEntry` по `chatUsers` без собственной подписи.
 - **Редактирование чата**: отдельная страница `EditMaxChat` и форма `Resources\Schemas\MaxChatForm` по политике `edit`
   (`max_chat.edit`). Редактируются только метаданные (`title`, `description`, `link`, `icon_url`); служебные поля
   (`chat_id`, `chat_type`, `status`, `last_activity_at`, `chat_checked_at`) доступны только для чтения — тип и статус

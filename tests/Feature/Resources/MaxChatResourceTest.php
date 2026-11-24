@@ -7,6 +7,7 @@ namespace GeekCo\FilamentMaxUsers\Tests\Feature\Resources;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Infolists\Components\Entry;
+use Filament\Schemas\Components\Section;
 use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Resources\Pages\EditMaxChat;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxChats;
@@ -226,20 +227,40 @@ class MaxChatResourceTest extends TestCase
         self::assertNotNull($schema);
 
         $names = [];
+        $entries = [];
 
-        foreach ($schema->getComponents() as $entry) {
-            if ($entry instanceof Entry) {
-                $names[] = $entry->getName();
+        foreach ($schema->getComponents() as $component) {
+            $components = $component instanceof Section
+                ? $component->getChildComponents()
+                : [$component];
+
+            foreach ($components as $entry) {
+                if ($entry instanceof Entry) {
+                    $names[] = $entry->getName();
+                    $entries[$entry->getName()] = $entry;
+                }
             }
         }
 
         self::assertSame(
             [
-                'chat_id', 'icon_url', 'chat_type', 'status', 'displayName', 'description', 'link',
-                'last_activity_at', 'chat_checked_at', 'chatUsers',
+                'chat_id', 'chat_type', 'status', 'icon_url', 'last_activity_at', 'chat_checked_at',
+                'displayName', 'link', 'description', 'chatUsers',
             ],
             $names,
         );
+        self::assertTrue($entries['chatUsers']->isLabelHidden());
+    }
+
+    public function test_view_page_groups_entries_into_sections(): void
+    {
+        $chat = $this->makeChat(3014);
+
+        Livewire::test(ViewMaxChat::class, ['record' => $chat->chat_id])
+            ->assertSuccessful()
+            ->assertSee(__('filament-max-users::chats.view.context'))
+            ->assertSee(__('filament-max-users::chats.view.about'))
+            ->assertSee(__('filament-max-users::chats.view.users'));
     }
 
     public function test_refresh_metadata_action_is_hidden_without_permission(): void
