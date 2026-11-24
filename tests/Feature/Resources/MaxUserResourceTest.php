@@ -318,20 +318,41 @@ class MaxUserResourceTest extends TestCase
 
         $names = [];
 
-        foreach ($schema->getComponents() as $entry) {
-            if ($entry instanceof Entry) {
-                $names[] = $entry->getName();
+        foreach ($schema->getComponents() as $component) {
+            $components = $component instanceof Section
+                ? $component->getChildComponents()
+                : [$component];
+
+            foreach ($components as $entry) {
+                if ($entry instanceof Entry) {
+                    $names[] = $entry->getName();
+                }
             }
         }
 
         self::assertSame(
             [
-                'user_id', 'is_bot', 'avatar_url', 'username', 'first_name', 'last_name',
-                'name', 'description', 'phone', 'phone_verified_at', 'email',
-                'last_activity_time', 'profile_checked_at', 'maxChats',
+                'user_id', 'is_bot', 'avatar_url', 'phone_verified_at', 'last_activity_time',
+                'profile_checked_at', 'username', 'first_name', 'last_name', 'name', 'description',
+                'phone', 'email', 'maxChats',
             ],
             $names,
         );
+    }
+
+    public function test_view_page_groups_entries_into_sections(): void
+    {
+        $user = MaxUser::create([
+            'user_id' => 1014,
+            'first_name' => 'Sectioned',
+            'is_bot' => false,
+        ]);
+
+        Livewire::test(ViewMaxUser::class, ['record' => $user->user_id])
+            ->assertSuccessful()
+            ->assertSee(__('filament-max-users::users.view.context'))
+            ->assertSee(__('filament-max-users::users.view.profile'))
+            ->assertSee(__('filament-max-users::users.view.chats'));
     }
 
     public function test_view_page_lists_chats_of_user(): void
@@ -484,7 +505,7 @@ class MaxUserResourceTest extends TestCase
             [
                 'user_id', 'phone_verified_at', 'last_activity_time', 'profile_checked_at',
                 'first_name', 'last_name', 'username', 'name', 'description', 'phone',
-                'reset_phone_verification', 'email', 'is_bot',
+                'email', 'reset_phone_verification', 'is_bot',
             ],
             $names,
         );

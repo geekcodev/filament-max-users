@@ -1,14 +1,15 @@
 ---
-tags: [ users, edit, form, sections, ui, lang, tests, composer, dependencies, gate ]
+tags: [ users, edit, view, form, sections, ui, lang, tests, composer, dependencies, gate ]
 date: 2026-11-23
 ---
 
-# Секции формы редактирования пользователя
+# Секции страниц пользователя
 
 ## Проблема
 
-Страница `EditMaxUser` показывала только редактируемые поля без визуального контекста записи, тогда как `EditMaxChat`
-содержит `Section`-карточку с фоном для read-only данных. Нужно было привести страницу пользователя к тому же виду.
+Страница `EditMaxUser` показывала только редактируемые поля без визуального контекста записи, а infolist `ViewMaxUser`
+был плоским списком, тогда как `EditMaxChat` содержит `Section`-карточку с фоном для read-only данных. Нужно было
+привести обе страницы пользователя к тому же виду.
 
 ## Решение
 
@@ -19,16 +20,21 @@ date: 2026-11-23
 `UserPresenter::lastActivityAt()`. Аватар — `Schemas\Components\Image` (виден только при заполненном `avatar_url`, alt
 из имени и фамилии). Нижняя секция «Профиль и контакты» (`users.form.profile`) содержит прежний набор редактируемых
 полей в две колонки. Обе секции — `columnSpanFull()`. Ключи `users.form.context` / `users.form.profile` добавлены в
-`lang/ru` и `lang/en`. Серверная логика сохранения (`mutateFormDataBeforeSave`, сброс подтверждения телефона) не
-менялась.
+`lang/ru` и `lang/en`. В блоке «Профиль и контакты» e-mail перенесён сразу после телефона, переключатели «Сбросить
+подтверждение телефона» и «Является ботом» стоят внизу одной строкой.
+
+`ViewMaxUser::infolist()` разбит на три секции-карточки: «Служебные данные» (ID, тип, аватар, подтверждение телефона,
+последняя активность, синхронизация), «Профиль и контакты» и «Чаты» (`RepeatableEntry` по `maxChats`). Подпись у
+повторяемой записи убрана, чтобы не дублировать заголовок секции. Новые ключи `users.view.context` /
+`users.view.profile`
+добавлены в оба lang-файла.
 
 После выпуска ядра и адаптера `v2.0.0` constraints в `composer.json` переведены с `dev-new` на `^2.0`; `composer update`
-поставил `geekcodev/max-php-client` и `geekcodev/laravel-max-client` версии v2.0.0, попутно обновились транзитивные
-guzzle/psr7/dotenv.
+поставил обе зависимости v2.0.0.
 
-Документация: в release notes v2.0.0 добавлен пункт про секции формы, обновлены цифры «Качества» и убран дублирующий
-пункт про диалог чата; README («Изменить пользователя» и «История изменений» v2.0.0) и контракт §5 `AGENTS.md`
-синхронизированы с кодом.
+Документация: в release notes v2.0.0 добавлены пункты про секции формы и просмотра, обновлены цифры «Качества» и убран
+дублирующий пункт про диалог чата; README («Пользователи», «Изменить пользователя», «История изменений» v2.0.0) и
+контракт §5 `AGENTS.md` синхронизированы с кодом.
 
 ## Тесты
 
@@ -36,6 +42,8 @@ guzzle/psr7/dotenv.
   список из служебных и редактируемых полей.
 - Новый `test_edit_page_shows_read_only_service_data`: заголовки секций, аватар в HTML, `assertFormFieldDisabled` для
   `user_id`, `phone_verified_at`, `profile_checked_at` и `last_activity_time`.
+- `test_view_page_shows_entries_in_expected_order` переведён на обход секций, добавлен
+  `test_view_page_groups_entries_into_sections` с проверкой заголовков.
 
 ## Нюансы
 
@@ -44,9 +52,8 @@ guzzle/psr7/dotenv.
 - `Image` в схеме формы не имеет `label()`, поэтому аватар выводится без подписи; при пустом `avatar_url` скрыт.
 - `getContainer()` у form-компонента возвращает `Schema`, который использует `HasDefaultDataFormattingSettings`, —
   формат даты совпадает с `->dateTime()` в таблицах и infolist.
-- Отдельные lang-ключи для служебных полей не заводились: используются существующие `users.view.*`, чтобы не дублировать
-  подписи.
+- Отдельные ключи для служебных полей не заводились: используются существующие `users.view.*`.
 
 ## Gate
 
-Lint 0/33, PHPStan level max 0, PHPUnit 85/85 (429 assertions), покрытие 98.02% строк (791/807), `composer audit` 0.
+Lint 0/33, PHPStan level max 0, PHPUnit 86/86 (433 assertions), покрытие 98.05% строк (803/819), `composer audit` 0.

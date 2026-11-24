@@ -53,6 +53,8 @@ return [
     ],
 
     'view' => [
+        'context'            => 'Service data',
+        'profile'            => 'Profile and contacts',
         'user_id'            => 'User ID',
         'first_name'         => 'First name',
         'last_name'          => 'Last name',
