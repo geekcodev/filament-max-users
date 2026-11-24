@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Resources\Tables;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxUserAction;
+use GeekCo\FilamentMaxUsers\Resources\MaxUserResource;
 use GeekCo\FilamentMaxUsers\Support\UserPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 
 class MaxUsersTable
 {
@@ -77,7 +84,7 @@ class MaxUsersTable
                     ->tooltip(UserPresenter::phoneTooltip()),
                 TextColumn::make('phone_verified_at')
                     ->label(__('filament-max-users::users.table.phone_verified_at'))
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->placeholder(__('filament-max-users::users.view.phone_unverified'))
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -93,12 +100,13 @@ class MaxUsersTable
                     ->toggleable(),
                 TextColumn::make('last_activity_time')
                     ->label(__('filament-max-users::users.table.last_activity_time'))
-                    ->dateTime('d.m.Y H:i')
+                    ->getStateUsing(static fn (Model $record): ?Carbon => UserPresenter::lastActivityAt($record))
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('profile_checked_at')
                     ->label(__('filament-max-users::users.table.profile_checked_at'))
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->placeholder(__('filament-max-users::users.view.never_checked'))
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -113,6 +121,21 @@ class MaxUsersTable
                 Filter::make('has_phone')
                     ->label(__('filament-max-users::users.table.filter_has_phone'))
                     ->query(static fn (Builder $query): Builder => $query->whereNotNull('phone')->where('phone', '!=', '')),
+            ])
+            ->recordUrl(static fn (Model $record): ?string => Gate::allows('view', $record)
+                ? MaxUserResource::getUrl('view', ['record' => $record])
+                : null)
+            ->recordActions([
+                RefreshMaxUserAction::make()
+                    ->iconButton(),
+                ViewAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('view', $record))
+                    ->iconButton(),
+                EditAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))
+                    ->iconButton(),
+                DeleteMaxUserAction::make()
+                    ->iconButton(),
             ])
             ->defaultSort('user_id', 'desc');
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Support;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Подписи пользователей, зависящие от состояния записи реестра.
@@ -14,6 +15,21 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class UserPresenter
 {
+    /**
+     * Время последней активности MAX приходит в миллисекундах (Unix ms),
+     * поэтому для форматирования его нужно привести к секундам.
+     */
+    public static function lastActivityAt(Model $record): ?Carbon
+    {
+        $value = $record->getAttribute('last_activity_time');
+
+        if (! \is_numeric($value)) {
+            return null;
+        }
+
+        return Carbon::createFromTimestampMs((int) $value);
+    }
+
     /**
      * Иконка телефона: номер из подтверждённого контакта — галочка, номер без
      * отметки подтверждения — вопросительный знак, телефона нет — без иконки.

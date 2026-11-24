@@ -8,6 +8,8 @@ use GeekCo\FilamentMaxUsers\FilamentMaxUsersServiceProvider;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\AdminPanelProvider;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\MockHttpClient;
 use GeekCo\FilamentMaxUsers\Tests\Fixtures\TestUser;
+use GeekCo\LaravelMaxClient\Enums\MaxChatPermission;
+use GeekCo\LaravelMaxClient\Enums\MaxUserPermission;
 use GeekCo\LaravelMaxClient\MaxServiceProvider;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\DB;
@@ -33,23 +35,43 @@ abstract class TestCase extends Orchestra
         Queue::fake();
 
         Gate::define(
-            'users.view',
+            MaxUserPermission::ViewAny->value,
             static fn (?TestUser $user): bool => $user->can_view_users ?? false,
         );
         Gate::define(
-            'users.manage',
+            MaxUserPermission::View->value,
+            static fn (?TestUser $user): bool => $user->can_view_users ?? false,
+        );
+        Gate::define(
+            MaxUserPermission::Manage->value,
             static fn (?TestUser $user): bool => $user->can_manage_users ?? false,
         );
         Gate::define(
-            'chats.view',
+            MaxUserPermission::Edit->value,
+            static fn (?TestUser $user): bool => $user->can_edit_users ?? false,
+        );
+        Gate::define(
+            MaxUserPermission::Delete->value,
+            static fn (?TestUser $user): bool => $user->can_delete_users ?? false,
+        );
+        Gate::define(
+            MaxChatPermission::ViewAny->value,
             static fn (?TestUser $user): bool => $user->can_view_chats ?? false,
         );
         Gate::define(
-            'chats.manage',
+            MaxChatPermission::View->value,
+            static fn (?TestUser $user): bool => $user->can_view_chats ?? false,
+        );
+        Gate::define(
+            MaxChatPermission::Manage->value,
             static fn (?TestUser $user): bool => $user->can_manage_chats ?? false,
         );
         Gate::define(
-            'chats.delete',
+            MaxChatPermission::Edit->value,
+            static fn (?TestUser $user): bool => $user->can_edit_chats ?? false,
+        );
+        Gate::define(
+            MaxChatPermission::Delete->value,
             static fn (?TestUser $user): bool => $user->can_delete_chats ?? false,
         );
     }

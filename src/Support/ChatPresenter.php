@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GeekCo\FilamentMaxUsers\Support;
 
 use GeekCo\LaravelMaxClient\Models\MaxChat;
+use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -34,7 +35,26 @@ final class ChatPresenter
 
         $key = $record->getKey();
 
-        return \is_scalar($key) ? 'chat ' . $key : 'chat';
+        if (! \is_scalar($key)) {
+            $unknown = __('laravel-max-client::chat.unknown');
+
+            return \is_string($unknown) ? $unknown : 'chat';
+        }
+
+        $fallback = __('laravel-max-client::chat.fallback', ['id' => $key]);
+
+        return \is_string($fallback) ? $fallback : 'chat '.$key;
+    }
+
+    /**
+     * Диалог в MAX не имеет own-метаданных: название берётся из профиля
+     * собеседника. Атрибут может быть enum или строкой у переопределённой модели.
+     */
+    public static function isDialog(Model $record): bool
+    {
+        $type = $record->getAttribute('chat_type');
+
+        return $type === ChatType::Dialog || $type === ChatType::Dialog->value;
     }
 
     /**
@@ -57,19 +77,5 @@ final class ChatPresenter
         }
 
         return \in_array(\strtolower($scheme), ['http', 'https'], true) ? $trimmed : null;
-    }
-
-    /**
-     * Есть ли у записи метаданные, полученные через getChat.
-     */
-    public static function hasMetadata(Model $record): bool
-    {
-        if ($record instanceof MaxChat) {
-            return $record->title !== null && $record->title !== '';
-        }
-
-        $title = $record->getAttribute('title');
-
-        return \is_string($title) && $title !== '';
     }
 }

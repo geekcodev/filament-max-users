@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace GeekCo\FilamentMaxUsers\Resources\Tables;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use GeekCo\FilamentMaxUsers\Resources\Actions\DeleteMaxChatAction;
+use GeekCo\FilamentMaxUsers\Resources\Actions\RefreshMaxChatAction;
+use GeekCo\FilamentMaxUsers\Resources\MaxChatResource;
 use GeekCo\FilamentMaxUsers\Support\ChatPresenter;
 use GeekCo\LaravelMaxClient\Enums\MaxChatStatus;
 use GeekCo\MaxPhpClient\Enum\ChatType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class MaxChatsTable
 {
@@ -84,12 +90,12 @@ class MaxChatsTable
                     ->toggleable(),
                 TextColumn::make('last_activity_at')
                     ->label(__('filament-max-users::chats.table.last_activity_at'))
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('chat_checked_at')
                     ->label(__('filament-max-users::chats.table.chat_checked_at'))
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -108,6 +114,21 @@ class MaxChatsTable
                         MaxChatStatus::Stopped->value => MaxChatStatus::Stopped->label(),
                         MaxChatStatus::Removed->value => MaxChatStatus::Removed->label(),
                     ]),
+            ])
+            ->recordUrl(static fn (Model $record): ?string => Gate::allows('view', $record)
+                ? MaxChatResource::getUrl('view', ['record' => $record])
+                : null)
+            ->recordActions([
+                RefreshMaxChatAction::make()
+                    ->iconButton(),
+                ViewAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('view', $record))
+                    ->iconButton(),
+                EditAction::make()
+                    ->authorize(static fn (Model $record): bool => Gate::allows('edit', $record))
+                    ->iconButton(),
+                DeleteMaxChatAction::make()
+                    ->iconButton(),
             ])
             ->defaultSort('chat_id', 'desc');
     }

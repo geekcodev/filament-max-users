@@ -9,18 +9,22 @@ use Filament\Panel;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use GeekCo\FilamentMaxUsers\Resources\Pages\EditMaxUser;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ListMaxUsers;
 use GeekCo\FilamentMaxUsers\Resources\Pages\ViewMaxUser;
+use GeekCo\FilamentMaxUsers\Resources\Schemas\MaxUserForm;
 use GeekCo\FilamentMaxUsers\Resources\Tables\MaxUsersTable;
+use GeekCo\LaravelMaxClient\Models\MaxUser;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class MaxUserResource extends Resource
 {
     public static function getModel(): string
     {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> */
-        return config('filament-max-users.users_model', \GeekCo\LaravelMaxClient\Models\MaxUser::class);
+        /** @var class-string<Model> */
+        return config()->string('laravel-max-client.users.model', MaxUser::class);
     }
 
     public static function getModelLabel(): string
@@ -81,7 +85,7 @@ class MaxUserResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema;
+        return MaxUserForm::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -94,6 +98,7 @@ class MaxUserResource extends Resource
         return [
             'index' => ListMaxUsers::route('/'),
             'view' => ViewMaxUser::route('/{record}'),
+            'edit' => EditMaxUser::route('/{record}/edit'),
         ];
     }
 
@@ -104,25 +109,21 @@ class MaxUserResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return false;
+        return Gate::allows('edit', $record);
     }
 
     public static function canDelete(Model $record): bool
     {
-        return false;
+        return Gate::allows('delete', $record);
     }
 
     public static function canAccess(): bool
     {
-        $permission = config()->string('filament-max-users.permissions.users.view', 'users.view');
-
-        $user = auth()->user();
-
-        return $user !== null && $user->can($permission);
+        return Gate::allows('viewAny', static::getModel());
     }
 
     public static function canView(Model $record): bool
     {
-        return static::canAccess();
+        return Gate::allows('view', $record);
     }
 }
