@@ -230,13 +230,13 @@ override. Статусы чатов и fallback-название чата (`ча
 Большой релиз 2. Переход на `max-php-client` / `laravel-max-client` v2 (constraints `^2.0`, обе зависимости выпущены
 тегом `v2.0.0`); оба раздела стали управляемыми: страницы редактирования профиля/контактов пользователя (форма разбита
 на блок «Служебные данные» только для чтения и блок «Профиль и контакты») и метаданных чата, удаление локальных записей
-вместе со связями `max_chat_users` с откатом при ссылке из хост-приложения. Страница просмотра пользователя
-сгруппирована в блоки «Служебные данные», «Профиль и контакты» и «Чаты». Права и Policy-классы перенесены в
-`laravel-max-client`: код `max_user` / `max_chat`, ability `view.any`, `view`, `edit`, `delete`, `manage`
-(без `create` — реестр наполняется вебхуками); старые `users.*` / `chats.*` и `FILAMENT_MAX_USERS_PERMISSION_*` больше
-не читаются, настройка прав — `MAX_PERMISSION_*`. Модели берутся из `laravel-max-client` (`users.model` /
-`chats.model`), ключи `users_model` / `chats_model` из конфига плагина удалены. Подробности —
-`.agents/release/RELEASE_NOTES_v2.0.0.md`.
+вместе со связями `max_chat_users` с откатом при ссылке из хост-приложения. Страницы просмотра сгруппированы в секции: у
+пользователя — «Служебные данные», «Профиль и контакты» и «Чаты», у чата — «Служебные данные», «О чате» и «Участники».
+Права и Policy-классы перенесены в `laravel-max-client`: код `max_user` / `max_chat`, ability `view.any`, `view`, `edit`,
+`delete`, `manage` (без `create` — реестр наполняется вебхуками); старые `users.*` / `chats.*` и
+`FILAMENT_MAX_USERS_PERMISSION_*` больше не читаются, настройка прав — `MAX_PERMISSION_*`. Модели берутся из
+`laravel-max-client` (`users.model` / `chats.model`), ключи `users_model` / `chats_model` из конфига плагина удалены.
+Подробности — `.agents/release/RELEASE_NOTES_v2.0.0.md`.
 
 ### v1.1.1
 
